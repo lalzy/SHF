@@ -1,0 +1,54 @@
+;;;; sdl-helper-functions.lisp
+
+(in-package #:shf-error-handling)
+
+;; Make a dynamic try-retry error
+
+(defparameter *quit-on-error* t)
+
+(defun error-message (text &key (title "Error!") (button :ok))
+  "Opens up an windows error message box"
+  (ftw:message-box :text (format nil "~a" text) :icon :error  :caption (format nil "~a" title)  :button button))
+
+(defmacro try-retry (try-func &key (cancel '(ccl:quit)) (text nil) (title nil) &aux (attempt (gensym)) (result (gensym)))
+  "A try-retry error system. Takes a function to attempt an operation on, 
+  if an error occurs will throw an retry-cancel message box that'll attempt the same operation everytime retry is pressed
+  Text is the error text, title is the message box title, cancel is what to do if it fails, default is exit"
+  `(labels ((,attempt () ; Used for recursion
+	      (let ((,result (handler-case 
+				 ;; Ensures a symbol is returned if successfull
+				 (progn
+				   ,try-func 
+				   'success)
+			       (error (e)
+				 
+				 ;; Uses the default error text unless a text has been passed
+				 (let ((error-text (if (null ,text)
+						       e
+						       ,text)))
+				   (error-message error-text 
+						  :title (if (null ,title) (format nil "~a" (type-of e)) ,title)
+						  :button :retry-cancel))))))
+		;; Check the state \ button pressed
+		(cond ((string= 'retry ,result)
+		       (,attempt))
+		      ((string= 'cancel ,result)
+		       'cancel)
+		      (t 'done)))))
+     ;;if we canceled, run ,cancel function     
+     (when (string= 'cancel (,attempt))
+       ,cancel)))
+
+
+(defun release-error ()
+  "Changes the error hook to be an ok\exit error message"
+  (setf *debugger-hook*
+      (lambda (error hook)
+	(declare (ignore hook))
+	(ftw:message-box :text (format nil "~a" error)
+			 :button :ok :caption (format nil "~a" (type-of error))
+			 :button :ok
+			 :icon :error)
+	;(when *quit-on-error*
+	  ccl:quit
+	)))
