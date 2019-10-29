@@ -34,57 +34,16 @@
 
 
 
-(defparameter *mouse-active* nil)
-(defparameter *pos-x* 0)
-(defparameter *pos-y* 0)
-(defparameter *scroll-y* nil)
-
-(defparameter *tb-w* 150)
-(defparameter *tb-h* 50)
-
-(defparameter *lines* 0)
-(defparameter *scroll-box-size* 0)
-(defparameter *max-lines* 0)
-
-(defparameter *box-x* 150)
-(defparameter *box-y* 150)
-
-(defparameter *height* nil)
-
-(defun line-test (strings)
-  (let* ((tf (shf:create-text-field :x  *box-x* :y *box-y* :w *tb-w* :h *tb-h* :alpha 255)) ;:background (shf:get-color blue)))
-	 (scroll-box nil))
-
-    (shf:draw-text-field-with-text tf strings  :color (shf:get-color blue)
-				   :text-start-x *pos-x* :text-start-y *pos-y* :font (shf:get-font :size 15))
-
-    (unless *scroll-y* (setf *scroll-y*  *box-y*))
-    
-    (let ((scroll-bar (shf:create-scroll-bar (+ (shf:w tf) *box-x*) (shf:y tf) 5 (shf:h tf) :show t)))
-      (setf (values *scroll-box-size* *max-lines*) (shf:calculate-scroll-box-height tf
-										    ;;scroll-bar
-										    *height* *lines* :min-size 15))
-      (if (<= *lines* *max-lines*)
-	  (setf (shf:show-scroll-bar? scroll-bar) nil)
-	  (setf (shf:show-scroll-bar? scroll-bar) t))
-      
-      (setf scroll-box (shf:create-scroll-box  scroll-bar
-					       0 ; X-position in relativity to the scrollbar  
-					      (- *scroll-y* *box-y*)
-					       5 *scroll-box-size*
-					      :color (shf:get-color lightgray)
-					      :hitbox-color (shf:get-color red)
-					      ))
-
-    (shf:draw-scroll-bar scroll-bar scroll-box))
-    (shf:get-hitbox  scroll-box)))
- 
 (defun main2 ()
   (let ((scroll-points 0)
 	(mouse-clicked nil)
 	(scroll-stop nil)
 	(init-string nil)
-	(string "hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string"))
+	(string "hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string")
+	(text-field nil)
+	(scroll-bar nil)
+	(lines nil)
+	(height nil))
     
     (setf shf:*debug* t)
     (setf shf:*debug-hitbox-draw* t)
@@ -104,53 +63,35 @@
      ;; Appends the init-form:
      :init-form 
      (progn
-       (setf (values string *lines* *height*) (shf:line-wrapping string *tb-w* :font (shf:get-font :size 15))))
-      :mouse-button-down-form (progn (when shf:*mouse-state* (setf *mouse-active* t)) )
-      :mouse-button-up-form (progn (unless (sdl:mouse-left-p) (setf mouse-clicked nil)))
+       (let ((tf-w 150)
+	     (tf-h 150)
+	     (tf-x 200)
+	     (tf-y 50))
+	 (setf (values string lines height) (shf:line-wrapping string tf-w))
+	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h))
+	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 30))))
+      ;:mouse-button-down-form (progn (when shf:*mouse-state* (setf *mouse-active* t)) )
+      ;:mouse-button-up-form (progn (unless (sdl:mouse-left-p) (setf mouse-clicked nil)))
       
       ;; Appends the main form \ gameplay-loop
       :main-form
       (progn
-	
-       (shf:empty-sprite-group)
-       (let* ((scroll-hitbox (line-test string)))
+	;;(shf:change-surface-parameters text-field :alpha 150)
+					;(setf (shf:get-surface text-field) (sdl:create-surface 150 150 :alpha 50))
 
-       (shf:draw-hitboxes)
+	(te text-field scroll-bar)
+	(shf:draw-text-field-with-text text-field string :color (shf:get-color blue))
+	(shf:draw-scroll-bar scroll-bar)
 
-       (when (and (shf:mouse-collision-check scroll-hitbox) (sdl:mouse-left-p))
-	 (setf mouse-clicked t))
-
-       (shf:draw-text (format nil "fps=~a" (round (sdl:average-fps))) #(0 0) :font (shf:get-font :size 15))
-  
-       (when (and mouse-clicked )
-	 (shf:draw-text (format nil "scrollstop - ~a" scroll-stop) #(0 25))
+	(shf:empty-sprite-group)
 	 
-	 (let ((mouse-dir (elt shf:*mouse-move-direction* 1))
-	       (mouse-x-dir (elt shf:*mouse-move-direction* 0)))
-	   (shf:draw-text (format nil "mouse-dir = ~a" mouse-dir) #(0 15))
-	   (setf *scroll-y* (- (sdl:mouse-y) 5))))
- 
+       ;(shf:draw-hitboxes)
 
-       (setf init-string t)
-       
-       (cond ((<= *scroll-y* *box-y*) (setf *scroll-y* *box-y*))
-	     ((>= *scroll-y* (+ *box-y* (- *tb-h* *scroll-box-size*))) (setf *scroll-y*
-									     (+ *box-y* (- *tb-h* *scroll-box-size*))
-									     )))
+      ))))
 
-
-
-
-       ;; Scroll text in textbox relative to position of scroll-bar's box
-       (let* ((relative-box (- *scroll-y* *box-y*))
-	      (max-box-pos  (- *tb-h* *scroll-box-size*))
-	      (line-pixels (* (- *lines* *max-lines*) *height*))
-	      (movement-rate (ceiling (/  line-pixels  (if (= max-box-pos 0) 1 max-box-pos)))))
-	      
-	 (setf *pos-y* (- (* movement-rate #||*box-y*||# relative-box ))));(- (* movement-rate relative-box))))
-      )))))
-
-
+(defun te (tf sb)
+  (shf:change-surface tf :alpha 225)
+  (shf:change-surface sb :alpha 225))
 
 
 (defun move-test (box)

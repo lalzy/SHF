@@ -51,6 +51,8 @@
    #:change-default-font
    #:get-font
 
+   #:change-surface-parameters
+   
    #:draw-text-with-lines
 
    #:line-wrapping
@@ -76,8 +78,11 @@
    #:draw-scroll-bar
    #:create-scroll-bar
    #:get-scroll-box-hitbox
-   
+   #:get-scroll-box
    #:show-scroll-bar?
+
+   #:get-scrollbox-hitbox
+
    
    ;; Sound
    :*list-of-sounds*
@@ -134,7 +139,7 @@
    #:incf-x #:incf-y
    #:set-x #:set-y
 
-   #:change-alpha
+   #:change-surface
    
    ;; Sprite class and it's Accessors
    #:sprite-class
