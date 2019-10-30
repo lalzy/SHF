@@ -311,53 +311,57 @@
 
 (defun draw-scroll-box (scroll-box)
   "Draws the scroll-box"
-  (let* ((hitbox (get-hitbox scroll-box))
-	(prev-x (x hitbox))
-	 (prev-y (y hitbox)))
-    (setf (x hitbox) (+ prev-x (x scroll-box))
-	  (y hitbox) (+ prev-y (y scroll-box))))
+
   (sdl:draw-box-* (x scroll-box)
 		  (y scroll-box) (w scroll-box) (h scroll-box)
 		  :surface (get-surface scroll-box)
 		  :color (get-box-color scroll-box)))
 
-
+;; Rework scrolling to use relative position
 (defun scrolling (scroll-bar)
   "Call to automatically check for, and cause scrolling"
-  #||
-  
-       (when (and (shf:mouse-collision-check (shf:get-scrollbox-hitbox scroll-bar)) (sdl:mouse-left-p))
-	 (setf mouse-clicked t))
+  (let* ((scroll-box (get-scroll-box scroll-bar))
+	 (hitbox (get-hitbox scroll-box)))
 
-       (shf:draw-text (format nil "fps=~a" (round (sdl:average-fps))) #(0 0) :font (shf:get-font :size 15))
-  
-       (when (and mouse-clicked )
-	 (shf:draw-text (format nil "scrollstop - ~a" scroll-stop) #(0 25))
-	 
-	 (let ((mouse-dir (elt shf:*mouse-move-direction* 1))
-	       (mouse-x-dir (elt shf:*mouse-move-direction* 0)))
-	   (shf:draw-text (format nil "mouse-dir = ~a" mouse-dir) #(0 15))
-	   (setf (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# (- (sdl:mouse-y) 5))))
- 
+    ;; Check if we click on the scroll-box
+    (when (and (shf:mouse-collision-check hitbox)
+	       (sdl:mouse-left-p))
+      (setf *mouse-held-scroll-box* t))
 
-       (setf init-string t)
-       
-       (cond ((<= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*) (setf (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
-	     ((>= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# (+ *box-y* (- *tb-h* *scroll-box-size*)))
-	      (setf (shf:y (shf:get-scroll-box scroll-bar)) ;;*scroll-y*
-		    (+ *box-y* (- *tb-h* *scroll-box-size*)))))
+    
+    ;; Hitbox is the absolute screen cordinate, where as scroll-box is relative to the scroll-bar
+    (when (and *mouse-held-scroll-box* )
+      (setf (y scroll-box) (- (- (sdl:mouse-y) (y scroll-bar)) (round (/ (h scroll-box) 2)))
+	    (y hitbox)  (- (sdl:mouse-y) (round (/ (h scroll-box) 2)))))
+
+    ;; Stops the scroll-box when beyond the bounds of the scroll-bar
+    (cond ((<= (y scroll-box) 0)
+	   (setf (y scroll-box) 0
+		 (y hitbox) (y scroll-bar)))
+	  ((>= (+ (h scroll-box) (y scroll-box)) (h scroll-bar))
+	   (setf (y scroll-box) (- (h scroll-bar) (h scroll-box))
+		 (y hitbox) (+ (y scroll-bar) (y scroll-box)))))
+    
+    ;;(y scroll-box))) ;(- (sdl:mouse-y) 5)))
+      ;(setf (y scroll-box) (- (sdl:mouse-y) (y scroll-box)))) ;(- (sdl:mouse-y) 5)))
+    
+      #||
+    (cond ((<= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*) (setf (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
+	  ((>= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# (+ *box-y* (- *tb-h* *scroll-box-size*)))
+	   (setf (shf:y (shf:get-scroll-box scroll-bar)) ;;*scroll-y*
+		 (+ *box-y* (- *tb-h* *scroll-box-size*)))))
 
 
-       ;; Scroll text in textbox relative to position of scroll-bar's box
-       (let* ((relative-box (- (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
-	      (max-box-pos  (- *tb-h* *scroll-box-size*))
-	      (line-pixels (* (- *lines* *max-lines*) *height*))
-	      (movement-rate (ceiling (/  line-pixels  (if (= max-box-pos 0) 1 max-box-pos)))))
-	      
-	 (setf *pos-y* (- (* movement-rate #||*box-y*||# relative-box ))));(- (* movement-rate relative-box))))
- ||#
-  
-  )
+    ;; Scroll text in textbox relative to position of scroll-bar's box
+    (let* ((relative-box (- (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
+	   (max-box-pos  (- *tb-h* *scroll-box-size*))
+	   (line-pixels (* (- *lines* *max-lines*) *height*))
+	   (movement-rate (ceiling (/  line-pixels  (if (= max-box-pos 0) 1 max-box-pos)))))
+      
+      (setf *pos-y* (- (* movement-rate #||*box-y*||# relative-box ))));(- (* movement-rate relative-box))))
+||#
+    
+    ))
 
 
 

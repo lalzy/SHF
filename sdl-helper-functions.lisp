@@ -77,6 +77,8 @@
 (defparameter *cursor* nil)
 (defparameter **cursor-offset** nil)
 
+(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
+
 (defun CFFI-init ()
   (cffi:define-foreign-library sdl
       (:windows "sdl.dll"))
@@ -237,7 +239,7 @@
 		    (previous-y nil)
 		    (move-dir nil))
 		(sdl:with-events ()
-		  (:quit-event () ,quit-form) ; Our quit form, same concept as init-form
+		  (:quit-event () ,quit-form t) ; Our quit form, same concept as init-form
 		  (:key-down-event ( :unicode unicode)
 				   ;; Adds key presses to global variables
 				   (setf *key-pressed-code* unicode)
@@ -257,6 +259,7 @@
 		  (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
 					  (setf *current-mouse-button* button
 						*mouse-state* state)
+					  (setf *mouse-held-scroll-box* nil)
 					  ,mouse-button-up-form)
 		  
 		  (:mouse-motion-event (:state state :x x :y y)

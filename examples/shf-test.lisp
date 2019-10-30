@@ -56,20 +56,23 @@
      :width 800
      :height 500
      :fps 60
-     :draw-sprites nil
+     :draw-sprites t
      ;:capture-mouse t
      ;:fullscreen t
      ;:borderless t
      ;; Appends the init-form:
+     :quit-form (progn 
+	(shf:empty-sprite-group))
      :init-form 
      (progn
+       
        (let ((tf-w 150)
 	     (tf-h 150)
 	     (tf-x 200)
 	     (tf-y 50))
 	 (setf (values string lines height) (shf:line-wrapping string tf-w))
 	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h))
-	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 30))))
+	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 30 :sb-hitbox-color (shf:get-color red) ))))
       ;:mouse-button-down-form (progn (when shf:*mouse-state* (setf *mouse-active* t)) )
       ;:mouse-button-up-form (progn (unless (sdl:mouse-left-p) (setf mouse-clicked nil)))
       
@@ -83,7 +86,12 @@
 	(shf:draw-text-field-with-text text-field string :color (shf:get-color blue))
 	(shf:draw-scroll-bar scroll-bar)
 
-	(shf:empty-sprite-group)
+	(shf:scrolling scroll-bar)
+
+	(shf:draw-text (format nil "hitbox = ~a, y = ~a" (shf:y (shf:get-hitbox (shf:get-scroll-box scroll-bar)))
+			       (shf:y (shf:get-scroll-box scroll-bar)))
+		       #(0 0))
+	
 	 
        ;(shf:draw-hitboxes)
 
