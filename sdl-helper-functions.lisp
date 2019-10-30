@@ -5,7 +5,7 @@
 ;;;   NOTE! Do not use MP3(or use smpeg.dll), causes crash on exit
 ;;;   
 ;;; WORKING ON:
-;;;   Text read\write system, Text Areas   
+;;;   Text read\write system, Text Areas 
 ;;;       > Rewrite the way line-wrap drawing works[Done]
 ;;;           Seperate it so there is only one function that takes a sequence of strings and draws those as lines
 ;;;           Then have a seperate function calculate this list with linewrap(using current linewrap algorythm)[Done]
@@ -16,7 +16,7 @@
 ;;;                    Also take an optional parameter for length to reduce potentional calculations needed
 ;;;      
 ;;;      > Convert main2 test\prototype code for text field + scrollbar into an actual text area system\class[Done]
-;;;         > Make the scrollbar\box\text scrollable(through engine, not game code)
+;;;         > Make the scrollbar\box\text scrollable(through engine, not game code)[Half Done]
 ;;;         > Make the scrollbar button\box sprite-able
 ;;;         > In support of sprite-able, ensure scroll\pixel movement is doable with static scroll button size.
 ;;;      

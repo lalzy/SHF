@@ -5,7 +5,6 @@
 (in-package #:shf-test)
 
 (defun main3 ()
-  (setf *default-file-character-encoding* :utf-32)
 
   
   (let* ((cursor-set nil))
@@ -24,10 +23,12 @@
     ; :fps 60
      :draw-sprites nil
 
+     :init-form (shf:create-cursor "c:/te/cursor.bmp")
      :key-up-form  (progn (print "up") (print "up2"))
      :main-form
      (progn
        (shf:draw-text "hello again!" #(200 220))
+       (sdl:draw-box-* 370 370 50 50 :color (shf:get-color blue))
        (shf:draw-text "hello!" #(200 200))
      )
 )))
