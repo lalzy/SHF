@@ -43,6 +43,7 @@
 	(string "hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string")
 	(text-field nil)
 	(scroll-bar nil)
+	(scroll-bar2 nil)
 	(lines nil)
 	(height nil))
     
@@ -72,8 +73,9 @@
 	     (tf-x 200)
 	     (tf-y 50))
 	 (setf (values string lines height) (shf:line-wrapping string tf-w))
-	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h))
-	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 30 :sb-hitbox-color (shf:get-color red) ))))
+	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :text string :line-amount lines))
+	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 30 :direction :y :sb-hitbox-color (shf:get-color red) ))
+	 ));(setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
       ;:mouse-button-down-form (progn (when shf:*mouse-state* (setf *mouse-active* t)) )
       ;:mouse-button-up-form (progn (unless (sdl:mouse-left-p) (setf mouse-clicked nil)))
       
@@ -84,14 +86,18 @@
 					;(setf (shf:get-surface text-field) (sdl:create-surface 150 150 :alpha 50))
 
 	(te text-field scroll-bar)
-	(shf:draw-text-field-with-text text-field string :color (shf:get-color blue))
 	(shf:draw-scroll-bar scroll-bar)
+	;(shf:draw-scroll-bar scroll-bar2)
 
-	(shf:scrolling scroll-bar)
+	
+	;(shf:scrolling scroll-bar)
+	;(shf:scrolling scroll-bar2)
 
-	(shf:draw-text (format nil "hitbox = ~a, y = ~a" (shf:y (shf:get-hitbox (shf:get-scroll-box scroll-bar)))
-			       (shf:y (shf:get-scroll-box scroll-bar)))
-		       #(0 0))
+	(shf:text-scrolling text-field scroll-bar string :color (shf:get-color blue))
+;	(shf:text-scrolling text-field scroll-bar2 string :color (shf:get-color blue))
+	
+	(shf:draw-text-field-with-text text-field :color (shf:get-color blue))
+	
 	
 	 
        ;(shf:draw-hitboxes)

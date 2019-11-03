@@ -80,6 +80,7 @@
    #:draw-text-on-text-field
    #:draw-text-field-with-text
 
+   #:text-scrolling
 
    ;; Scroll Box
    #:create-scroll-box

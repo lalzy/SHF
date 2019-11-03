@@ -25,16 +25,27 @@
 (defclass text-field (rect)
   ((surface :accessor get-surface
 	    :initarg :surface)
+   (text :accessor get-text
+	      :initarg :text
+	      :documentation "text to be used on the text-field")
+   (text-x :accessor get-text-x
+	   :initarg :text-x)
+   (text-y :accessor get-text-y
+	   :initarg :text-y)
    (state :accessor get-text-field-state
 	  :initarg :state)
    (color :accessor get-box-color
 	  :initarg :color)
    (alpha :accessor get-alpha
 	  :initarg :alpha)
+   (font :accessor get-text-font
+	 :initarg :font
+	 :Documentation "Font used by the textfield")
    (background :accessor text-field-background
 	       :initarg :background)
-   (foreground :accessor text-field-foreground
-	       :initarg :foreground)
+   (amount-of-lines :accessor get-line-amount
+		    :Documentation "The amount of lines the text-field hold"
+		    :initarg :line-amount)
    (hitbox :accessor get-hitbox
 	   :initarg :hitbox)))
 
@@ -44,8 +55,14 @@
 	    :initarg :surface)
    (color :accessor get-box-color
 	  :initarg :color)
+   (direction :accessor get-box-dir
+	      :initarg :dir
+	      :documentation "what cordinate to scroll")
    (hitbox :accessor get-hitbox
-	   :initarg :hitbox)))
+	   :initarg :hitbox)
+   (active :accessor is-active-box?
+	   :initform nil
+	   :documentation "if the mouse is currently engaged in this box")))
 
 
 (defclass scroll-bar (rect)
@@ -248,35 +265,146 @@
 
 
 
-(defun draw-text-on-text-field (textfield text x y &key (font sdl:*default-font*) (color (get-color white)))
+;; Make it support image and transperancy
+(defun create-text-field (&key (x 0) (y 0) (w *width*) (h *height*) state
+			    (background (get-color white))
+			    foreground
+			    (font sdl:*default-font*)
+			    text
+			    (text-x 0)
+			    (text-y 0)
+			    (hitbox-color background)
+			    (alpha 255)
+			    line-amount)
+  "Rewrite to create a text-field based on height\width parameters, and optional background, 
+also create collision detection for mouse
+
+Get the x,y,width,height, create a surface with width\height and draw it"
+
+  (let ((surface (sdl:create-surface w h :alpha alpha)))
+    (when background
+      (sdl:draw-box-* 0 0 w h :surface surface
+		      :color background))
+    (make-instance 'text-field :surface surface :x x :y y :w w :h h :state state
+		   :background background :foreground foreground :line-amount line-amount :font font
+		   :text text :text-x text-x :text-y text-y
+
+		   ;; Unsure about hitbox for text-field, might not have one
+		   :hitbox (create-hitbox 'rect :x x :y y :w w :h h :color hitbox-color)
+		   )))
+
+(defgeneric change-surface (object &key alpha))
+
+
+(defmethod change-surface (object  &key alpha)
+  (let* ((old-surface (get-surface object))
+	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface))))
+    (setf (get-surface object) surface)))
+
+
+(defmethod change-surface ((object text-field) &key alpha)
+  (let* ((old-surface (get-surface object))
+	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface) :alpha alpha)))
+    
+    ;; Ensures the textbox box-field is drawn on the surface before anything else
+    (when (text-field-background object)
+      (sdl:draw-box-* 0 0 (w object) (h object) :surface surface
+		      :color (text-field-background object)))
+  (setf (get-surface object) surface)))
+
+(defmethod change-surface ((object scroll-bar) &key alpha)
+  (let* ((old-surface (get-surface object))
+	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface) :alpha alpha)))
+
+    ;; Surface for the scroll-box is the same as the scroll-bar
+    (setf (get-surface (get-scroll-box object)) surface)
+    (setf (get-surface object) surface)))
+
+
+
+(defun change-text-field-state (text-field)
+  (if (text-field-active? text-field)
+      (setf (text-field-active?) nil)
+      (setf (text-field-active? text-field) t)))
+
+(defun get-max-box-pos (scroll-bar)
+  (- (h scroll-bar) (h (get-scroll-box scroll-bar))))
+
+(defun text-field-shown-lines (text-field)
+  (floor (/ (h text-field) (sdl:get-font-size " " :size :h :font (get-text-font text-field)))))
+
+(defun line-pixels (text-field)
+  (* (- (get-line-amount text-field) (text-field-shown-lines text-field)) (sdl:get-font-size " " :size :h :font (get-text-font text-field))))
+
+(defun get-movement-rate (text-field scroll-bar)
+  (let* ((max-box-pos (get-max-box-pos scroll-bar)))
+    (- (ceiling (/ (line-pixels text-field) (if (= max-box-pos 0) 1 max-box-pos))))))
+
+
+(defun text-scrolling (text-field scroll-bar texts &key (color (shf:get-color black))
+						     &aux (scroll-box (get-scroll-box scroll-bar)))
+  (scrolling scroll-bar)
+  #||
+  (when (string-equal (get-box-dir scroll-box) :x)
+    (setf (get-text-x text-field) (x scroll-box)))
+  
+  (when (string-equal (get-box-dir scroll-box) :y)
+    (setf (get-text-y text-field) (y scroll-box)))
+  ||#
+
+  ;; calculate size of scroll box, irregardless of the size of the actual box
+  ;; For use with scrolling the text
+  (setf (get-text-y text-field) (* (get-movement-rate text-field scroll-bar)
+				   (y scroll-box)))
+  
+  ;;content.y = -(verticalScrollbar.grip.y / verticalScrollbar.height) * content.height;
+  
+  #||					     ;amntpixl
+  (setf (get-text-y text-field) (- (round (* (/ (y scroll-box) (h scroll-bar))
+					     (* (sdl:get-font-size " " :size :h :font (get-text-font text-field))
+						18;(- (get-line-amount text-field))
+						)))))
+
+  ||#
+  )
+
+
+(defun draw-text-on-text-field (textfield &key text (color (get-color white)))
   "draws lines of text ontop of a text field"
-  (shf:draw-text-with-lines  text (get-surface textfield) :x-pos x :y-pos y :font font :color color))
+  (shf:draw-text-with-lines  (if text text (get-text textfield))
+			     (get-surface textfield)
+			     :x-pos (get-text-x textfield) :y-pos (get-text-y textfield)
+			     :font (get-text-font textfield) :color color))
 
 (defun draw-text-field (textfield)
   "Draws the text field onto the screen"
   (sdl:draw-surface-at-* (get-surface textfield) (x textfield) (y textfield)))
 
-(defun draw-text-field-with-text (textfield text &key (text-start-x 0) (text-start-y 0) (font sdl:*default-font*) (color (get-color white)))
+(defun draw-text-field-with-text (textfield &key text  (color (get-color white)))
   "Draws both the lines of text ontop of a text field, and the text field itself onto the screen"
-  #||(sdl:draw-box-* 0 0 (w textfield) (h textfield) :surface (get-surface textfield)
-		  :color (text-field-background textfield))|#
-  
-  (draw-text-on-text-field textfield text text-start-x text-start-y :font font :color color)
+  (draw-text-on-text-field textfield :text text :color color)
   (draw-text-field textfield))
 
 
 (defun create-scroll-bar (x y w h &key  (show t) (bar-color (get-color darkgray)) (alpha 255)
-				    (sb-x 0) (sb-y 0) (sb-w w) (sb-h h) (sb-color (get-color lightgray)) (sb-hitbox-color sb-color))
+				    (sb-x 0) (sb-y 0) (sb-w w) (sb-h h) (direction :y)
+				    (sb-color (get-color lightgray)) (sb-hitbox-color sb-color))
   "Creates a scroll-bar"
   (let* ((surface (sdl:create-surface w h :alpha alpha)))
     (make-instance 'scroll-bar :surface surface :w w :h h :x x :y y :bar-color bar-color  :show show
-		   :scroll-box (create-scroll-box surface x y sb-x sb-y sb-w sb-h sb-color sb-hitbox-color)))) ;:box-color box-color)))
+		   :scroll-box (create-scroll-box surface x y sb-x sb-y sb-w sb-h direction sb-color sb-hitbox-color)))) ;:box-color box-color)))
 
-(defun create-scroll-box (surface bar-x bar-y box-x box-y box-w box-h color hb-color) ;&key (color (get-color lightgray)) (hitbox-color color))
+
+(defun add-to-scroll-box-list (scroll-box-instance)
+  (setf *scroll-boxes-list* (cons scroll-box-instance *scroll-boxes-list*))
+  scroll-box-instance)
+
+(defun create-scroll-box (surface bar-x bar-y box-x box-y box-w box-h direction color hb-color)
   "Creates the box used for scrolling in a scrollbar"
-    (make-instance 'scroll-box :surface surface :w box-w :h box-h :x box-x :y box-y :color color
-		   :hitbox (create-hitbox 'rect :x bar-x :y bar-y :w box-w :h box-h ;(1+ box-h)
-					  :color hb-color)))
+  (add-to-scroll-box-list (make-instance 'scroll-box :surface surface :w box-w :h box-h :x box-x :y box-y :color color :dir direction
+					 :hitbox (create-hitbox 'rect :x bar-x :y bar-y :w box-w :h box-h  ;(1+ box-h)
+								:color hb-color))))
+
 
 (defun draw-bar (scroll-bar)
   (sdl:draw-box-* 0 0 (w scroll-bar) (h scroll-bar) :surface (get-surface scroll-bar) :color (get-bar-color scroll-bar)))
@@ -317,106 +445,43 @@
 		  :surface (get-surface scroll-box)
 		  :color (get-box-color scroll-box)))
 
+(defun scroll-box-active-mouse? (scroll-box )
+  "Changes the active state of the scroll-box if mouse is clicked on it"
+  (and (shf:mouse-collision-check (get-hitbox scroll-box)) (sdl:mouse-left-p)
+       (setf (is-active-box? scroll-box) t)))
+
+  
+(defun out-of-bounds? (box-pos box-size bar-size)
+  "Checks if the scroll box is out of bound of the bar"
+  (cond ((<= box-pos 0)
+	 'start)
+	((>= (+ box-size box-pos) bar-size)
+	 'end)))
+
+(defun get-new-scroll-box-pos (mouse-pos bar-pos bar-size box-pos  box-size)
+  "Returns the new position of the scroll box and it's hitbox in relative to the mouse position"
+  (let ((bounds (out-of-bounds? box-pos box-size bar-size)))
+    (cond ((and (string-equal bounds 'start) (< mouse-pos (+ bar-pos (round (/ box-size 2)))))
+	   (values 0 bar-pos))
+	  ((and (string-equal bounds 'end) (> mouse-pos (- (+ bar-size bar-pos) (round (/ box-size 2)))))
+	   (values (- bar-size box-size)
+		   (+ bar-pos box-pos)))
+	  (t (values (- (- mouse-pos bar-pos) (round (/ box-size 2)))
+		     (- mouse-pos (round (/ box-size 2))))))))
+
 ;; Rework scrolling to use relative position
-(defun scrolling (scroll-bar)
-  "Call to automatically check for, and cause scrolling"
-  (let* ((scroll-box (get-scroll-box scroll-bar))
-	 (hitbox (get-hitbox scroll-box)))
-
-    ;; Check if we click on the scroll-box
-    (when (and (shf:mouse-collision-check hitbox)
-	       (sdl:mouse-left-p))
-      (setf *mouse-held-scroll-box* t))
-
-    
-    ;; Hitbox is the absolute screen cordinate, where as scroll-box is relative to the scroll-bar
-    (when (and *mouse-held-scroll-box* )
-      (setf (y scroll-box) (- (- (sdl:mouse-y) (y scroll-bar)) (round (/ (h scroll-box) 2)))
-	    (y hitbox)  (- (sdl:mouse-y) (round (/ (h scroll-box) 2)))))
-
-    ;; Stops the scroll-box when beyond the bounds of the scroll-bar
-    (cond ((<= (y scroll-box) 0)
-	   (setf (y scroll-box) 0
-		 (y hitbox) (y scroll-bar)))
-	  ((>= (+ (h scroll-box) (y scroll-box)) (h scroll-bar))
-	   (setf (y scroll-box) (- (h scroll-bar) (h scroll-box))
-		 (y hitbox) (+ (y scroll-bar) (y scroll-box)))))
-    
-    ;;(y scroll-box))) ;(- (sdl:mouse-y) 5)))
-      ;(setf (y scroll-box) (- (sdl:mouse-y) (y scroll-box)))) ;(- (sdl:mouse-y) 5)))
-    
-      #||
-    (cond ((<= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*) (setf (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
-	  ((>= (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# (+ *box-y* (- *tb-h* *scroll-box-size*)))
-	   (setf (shf:y (shf:get-scroll-box scroll-bar)) ;;*scroll-y*
-		 (+ *box-y* (- *tb-h* *scroll-box-size*)))))
-
-
-    ;; Scroll text in textbox relative to position of scroll-bar's box
-    (let* ((relative-box (- (shf:y (shf:get-scroll-box scroll-bar)) #||*scroll-y*||# *box-y*))
-	   (max-box-pos  (- *tb-h* *scroll-box-size*))
-	   (line-pixels (* (- *lines* *max-lines*) *height*))
-	   (movement-rate (ceiling (/  line-pixels  (if (= max-box-pos 0) 1 max-box-pos)))))
-      
-      (setf *pos-y* (- (* movement-rate #||*box-y*||# relative-box ))));(- (* movement-rate relative-box))))
-||#
-    
-    ))
-
-
-
-;; Make it support image and transperancy
-(defun create-text-field (&key (x 0) (y 0) (w *width*) (h *height*) state
-			    (background (get-color white))
-			    foreground
-			    (hitbox-color background)
-			    (alpha 255))
-  "Rewrite to create a text-field based on height\width parameters, and optional background, 
-also create collision detection for mouse
-
-Get the x,y,width,height, create a surface with width\height and draw it"
-
-  (let ((surface (sdl:create-surface w h :alpha alpha)))
-    
-    (sdl:draw-box-* 0 0 w h :surface surface
-		    :color background)
-					;:alpha alpha)
-  #||(sdl:draw-box-* 0 0 (w textfield) (h textfield) :surface (get-surface textfield)
-		  :color (text-field-background textfield) :alpha (get-alpha textfield))||#
-    (make-instance 'text-field :surface surface :x x :y y :w w :h h :state state
-		   :background background :foreground foreground :alpha alpha
-		   :hitbox (create-hitbox 'rect :x x :y y :w w :h h :color hitbox-color))))
-
-(defgeneric change-surface (object &key alpha))
-
-
-(defmethod change-surface (object  &key alpha)
-  (let* ((old-surface (get-surface object))
-	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface))))
-    (setf (get-surface object) surface)))
-
-
-(defmethod change-surface ((object text-field) &key alpha)
-  (let* ((old-surface (get-surface object))
-	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface) :alpha alpha)))
-    
-    ;; Ensures the textbox box-field is drawn on the surface before anything else
-    (sdl:draw-box-* 0 0 (w object) (h object) :surface surface
-		    :color (text-field-background object))
-  (setf (get-surface object) surface)))
-
-(defmethod change-surface ((object scroll-bar) &key alpha)
-  (let* ((old-surface (get-surface object))
-	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface) :alpha alpha)))
-
-    ;; Surface for the scroll-box is the same as the scroll-bar
-    (setf (get-surface (get-scroll-box object)) surface)
-    (setf (get-surface object) surface)))
-
-
-
-(defun change-text-field-state (text-field)
-  (if (text-field-active? text-field)
-      (setf (text-field-active?) nil)
-      (setf (text-field-active? text-field) t)))
-
+(defun scrolling (scroll-bar &aux (scroll-box (get-scroll-box scroll-bar))
+			       (hitbox (get-hitbox scroll-box)))
+  "Call to automatically check for, and cause scrolling. 
+Destructivly change the positions of scroll-bar, scroll-box(and it's hitbox)"
+  (scroll-box-active-mouse? scroll-box)
+  (when (is-active-box? scroll-box)
+    (cond ((string-equal (get-box-dir scroll-box) :y)
+	   (setf (values (y scroll-box) (y hitbox))
+		 (get-new-scroll-box-pos (sdl:mouse-y) (y scroll-bar)  (h scroll-bar)
+					 (y scroll-box) (h scroll-box))))
+	  
+	  ((string-equal (get-box-dir scroll-box) :x)
+	   (setf (values (x scroll-box) (x hitbox))
+		 (get-new-scroll-box-pos (sdl:mouse-x) (y scroll-bar) (w scroll-bar)
+					 (x scroll-box) (w scroll-box)))))))

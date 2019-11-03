@@ -207,7 +207,8 @@ If no sprite is provided, it will check type, if it's a rect a size vector will 
 	(setf (get-hitbox-rel-y hitbox) py))
       (setf (get-sprite-hitboxes sprite) (push hitbox (get-sprite-hitboxes sprite))))
     
-    (push hitbox *hitbox-draw-group*) ; Add hitbox to hitbox draw-group for drawing
+    (when color ; Add hitbox to hitbox draw-group for drawing only if a color has been supplied
+      (push hitbox *hitbox-draw-group*)) 
     hitbox))
   
 

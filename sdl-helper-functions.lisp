@@ -2,7 +2,8 @@
 ;;;   Go to Shape-classes.lisp, SHF-Error-Handling and change the respected functions for your implementation
 ;;;       > Also alternativly create a new create-exe function for your implementation
 ;;;   
-;;;   NOTE! Do not use MP3(or use smpeg.dll), causes crash on exit
+;;;   NOTE! Do not use MP3(or use smpeg.dll),
+;;;            causes crash on exit
 ;;;   
 ;;; WORKING ON:
 ;;;   Text read\write system, Text Areas 
@@ -22,8 +23,12 @@
 ;;;      
 ;;;      > Create a text-input test
 ;;;   
+;;;   Do git stuff
 ;;;   
 ;;; TODO:
+;;;   Rewrite the textfield\area scrolling system to not have a hitbox(on the scroll box\area),
+;;;      and instead just use the box itself as mouse collision check(may have to create new method for collision check)
+;;; 
 ;;;   Add a menu system
 ;;;     > Tied in with state system?
 ;;;     > Create a keybind system
@@ -34,6 +39,8 @@
 ;;;   Text Read and write system(text areas) - 320|28 - 780|345
 ;;;       > scrollbar
 ;;;
+;;;   > Tidy source files
+;;;
 ;;;   -- Maybe\lowpriority --
 ;;;
 ;;;   Multiple playlists for Music?
@@ -42,6 +49,8 @@
 ;;;     > Also sprite collision if no hitboxes are found in sprite
 ;;;
 ;;;   Incoperate a physics engine(Box2D, or ODE?)
+;;;
+;;;   Rewrite scroll-bar\box system to use clossures instead of global variable to reset the active box
 ;;;
 ;;; ------ Performance concerns ------
 ;;;
@@ -76,8 +85,8 @@
 (defparameter *mouse-move-direction* #(none none))
 (defparameter *cursor* nil)
 (defparameter **cursor-offset** nil)
-
-(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
+;(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
+(defparameter *scroll-boxes-list* nil) ; List of scroll boxes for the use of emptying when not clicked
 
 (defun CFFI-init ()
   (cffi:define-foreign-library sdl
@@ -259,7 +268,8 @@
 		  (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
 					  (setf *current-mouse-button* button
 						*mouse-state* state)
-					  (setf *mouse-held-scroll-box* nil)
+					  (dolist (sb *scroll-boxes-list*)
+					    (setf (is-active-box? sb) nil))
 					  ,mouse-button-up-form)
 		  
 		  (:mouse-motion-event (:state state :x x :y y)
