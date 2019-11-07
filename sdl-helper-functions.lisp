@@ -1,4 +1,13 @@
 ;;;; sdl-helper-functions.lisp
+;;;
+;;;
+;;;   About:
+;;;   Code Conventions:
+;;;    Aux:
+;;;      Used to store objects, or macro gensyms
+;;;
+;;;
+;;;
 ;;;   Go to Shape-classes.lisp, SHF-Error-Handling and change the respected functions for your implementation
 ;;;       > Also alternativly create a new create-exe function for your implementation
 ;;;   
@@ -51,6 +60,10 @@
 ;;;   Incoperate a physics engine(Box2D, or ODE?)
 ;;;
 ;;;   Rewrite scroll-bar\box system to use clossures instead of global variable to reset the active box
+;;;
+;;;   Support setting a begining position for text in text-field   
+;;;     > Requires rewrite of many functions to use that new start
+;;;          position, instead of using 0
 ;;;
 ;;; ------ Performance concerns ------
 ;;;

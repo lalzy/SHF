@@ -69,7 +69,7 @@
    #:draw-debug-text
    #:show-menu-text ; ?
    #:draw-text-with-lines
-
+   
    ;; Text Field
    #:text-field
    #:text-field-active?
@@ -80,6 +80,10 @@
    #:draw-text-on-text-field
    #:draw-text-field-with-text
 
+   #:get-text
+   #:get-text-y
+   #:get-text-font
+   #:get-line-amount
    #:text-scrolling
 
    ;; Scroll Box
