@@ -16,6 +16,9 @@
    :*key-pressed-state*
    #:main-loop
 
+   #:new-main
+   
+
    ;; Keyboard
    #:is-keys
    #:check-key
@@ -44,8 +47,7 @@
    #:add-color
 
    ;; Generic drawing things
-   
-   
+
    ;; Generic Accessors or class parameter editors
    #:rect
    #:circle
@@ -72,7 +74,7 @@
    
    ;; Text Field
    #:text-field
-   #:text-field-active?
+   #:is-active?
    #:text-field-background
    #:create-text-field
    #:change-text-field-state
@@ -80,6 +82,7 @@
    #:draw-text-on-text-field
    #:draw-text-field-with-text
 
+   #:input-text-to-field
    #:get-text
    #:get-text-y
    #:get-text-font

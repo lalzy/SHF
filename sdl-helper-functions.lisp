@@ -217,7 +217,8 @@
      
      (setf (sdl:frame-rate) ,fps)
      ,@body))
-	 
+
+
 
 (defmacro main-loop (&key (width nil) (height nil) (fps 120) (title "test") (icon nil) (fullscreen nil) (borderless nil)
 		       (draw-sprites t) (default-font nil) (capture-mouse nil)
@@ -262,14 +263,14 @@
 		    (move-dir nil))
 		(sdl:with-events ()
 		  (:quit-event () ,quit-form t) ; Our quit form, same concept as init-form
-		  (:key-down-event ( :unicode unicode)
+		  (:key-down-event (:key key :unicode unicode)
 				   ;; Adds key presses to global variables
-				   (setf *key-pressed-code* unicode)
+				   (setf *key-pressed-code* (list key unicode))
 				   (setf *key-pressed-state* (sdl:key-state-p))
 				   ,key-down-form)
-		  (:key-up-event (:unicode unicode)
+		  (:key-up-event (:key key :unicode unicode)
 				 ;; Removes keypresses from global variables
-				 (setf *key-pressed-code* unicode)
+				 (setf *key-pressed-code* (list nil unicode))
 				 (setf *key-pressed-state* (sdl:key-state-p))
 				  ,key-up-form
 				 )
@@ -282,7 +283,7 @@
 					  (setf *current-mouse-button* button
 						*mouse-state* state)
 					  (dolist (sb *scroll-boxes-list*)
-					    (setf (is-active-box? sb) nil))
+					    (setf (is-active? sb) nil))
 					  ,mouse-button-up-form)
 		  
 		  (:mouse-motion-event (:state state :x x :y y)
@@ -298,6 +299,13 @@
 			   (draw-sprites) 
 			   (draw-hitboxes))
 
+
+			 ;; Test later after changing to Norwegian computer
+#||
+			 (draw-text (format nil "random-test - ~a" (sdl:GET-GLYPH-METRIC #\a :metric :maxy))
+				    #(0 50))
+
+			 ||#
 			 ;; Mouse direction
 			 (setf previous-x (sdl:mouse-x)
 			       previous-y (sdl:mouse-y))
@@ -325,3 +333,71 @@
   (ccl:save-application (merge-pathnames path (format nil "~a~:[~;.exe~]" name exe-extention?))
 			:application-type app-type
 			:toplevel-function function :prepend-kernel t))
+
+
+
+
+;; Can't return it, for unkown reasons
+
+(defun is-keyword (item)
+  (case item ((:main :end :init) t)))
+
+(defmacro key-sort (args &aux (main-part (gensym)) (start-part (gensym))
+			   (init-part (gensym)))
+  "Sorts"
+  `(let ((list '(,@args))
+	 (,main-part)
+	 (,init-part)
+	 (,start-part))
+     (loop for item in list
+        with current
+	  finally (setf ,main-part (reverse ,main-part))
+	do
+
+	  (case item 
+	    ((:main :end :init) (setf current item)))
+
+	  (unless (is-keyword item)
+	    (cond ((string-equal current :main)
+		   (push item ,main-part))
+		  ((string-equal current :end)
+		   (push item ,start-part))
+		  ((string-equal current :init)
+		   (push item ,init-part)))))
+     (values ,init-part ,main-part ,start-part)))
+
+(defun run-form (form-list)
+  (mapcar #'(lambda (x)
+	      (apply (first x) (rest x))) form-list))
+
+;; Make other keywords
+;; ALternativly, (&key ) for keywords
+(defmacro new-main ( &rest args &aux (font (gensym)) (main-form (gensym)) (quit-form (gensym)) (init-form (gensym)))
+  `(let (,main-form)
+     (setf (values ,init-form ,main-form ,quit-form) (key-sort ,args))
+     
+     
+     (sdl:with-init ()
+       (sdl:init-video)
+       (sdl:enable-unicode)
+       ;; Attempts to initialize the default font
+       (let ((,font (make-instance 'sdl:ttf-font-definition
+				 :size 15
+				 :filename  "c:/te/vera.ttf")))
+	(sdl:initialise-default-font ,font))
+      (sdl:window 800 640 :title-caption "new-main-test")
+
+      (run-form ,init-form)
+
+      
+      (setf (sdl:frame-rate) 60)
+      
+      (sdl:with-events ()
+		  (:quit-event () (run-form ,quit-form) t) 
+
+		  (:idle ()
+			 (sdl:clear-display (get-color black))
+			 (run-form ,main-form)
+			 
+			 ;; Update display
+			 (sdl:update-display))))))

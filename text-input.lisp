@@ -9,7 +9,7 @@
 (defparameter *key-pressed-state* nil) ; A list of all pressed keys
 (defparameter *font-path* "") ; Path to fonts
 (defparameter *fonts* '("vera.tff")) ; list of font names
-(defparameter *font-size* 10) ; Default font size
+(defparameter *font-size* 15) ; Default font size
 
 (defparameter *colors* `((white ,(sdl:color :r 255 :g 255 :b 255))
 			 (black ,(sdl:color :r 0 :g 0 :b 0))
@@ -25,6 +25,8 @@
 (defclass text-field (rect)
   ((surface :accessor get-surface
 	    :initarg :surface)
+   (active :accessor is-active?
+	   :initarg :active)
    (text :accessor get-text
 	      :initarg :text
 	      :documentation "text to be used on the text-field")
@@ -60,7 +62,7 @@
 	      :documentation "what cordinate to scroll")
    (hitbox :accessor get-hitbox
 	   :initarg :hitbox)
-   (active :accessor is-active-box?
+   (active :accessor is-active?
 	   :initform nil
 	   :documentation "if the mouse is currently engaged in this box")))
 
@@ -171,7 +173,7 @@
   (loop for i from start-line to end-line do
 	(let* ((word (elt words i)))
 	  ;; Only draws what can be seen
-	  (when (and (> y-pos (- (sdl:y surface) height)) (< y-pos (sdl:height surface)))
+	  (when (and (> y-pos (- (sdl:y surface) height)) (< y-pos (sdl:height surface)) (> (length word) 0))
 	      (sdl:draw-string-solid word (vector x-pos y-pos) :surface surface :font font :color color)))
 
 	;; Exit loop when we exceed what will be visible
@@ -246,9 +248,12 @@
 
 (defun get-pressed-key (&aux (key *key-pressed-code*))
   "Get the current pressed key as character"
-  (unless key (setf key 0))
-   ; (unless (is-keys :sdl-key-up :sdl-key-down :sdl-key-left :sdl-key-right :sdl-key-lshift :sdl-key-rshift)
-      (code-char key))
+  ;(unless (second key) (setf (second key) 0))
+					; (unless (is-keys :sdl-key-up :sdl-key-down :sdl-key-left :sdl-key-right :sdl-key-lshift :sdl-key-rshift)
+  ;(format t "key=~a" key)
+					;(values (first key) (second key)))
+  (when key
+    (values (first key) (code-char (second key)))))
 
 (defun check-key (char)
   "checks if passed char is the pressed key"
@@ -269,12 +274,13 @@
 (defun create-text-field (&key (x 0) (y 0) (w *width*) (h *height*) state
 			    (background (get-color white))
 			    (font sdl:*default-font*)
-			    text
+			    (text nil)
 			    (text-x 0)
 			    (text-y 0)
+			    (active nil)
 			    (hitbox-color background)
 			    (alpha 255)
-			    line-amount)
+			    (line-amount 0))
   "Rewrite to create a text-field based on height\width parameters, and optional background, 
 also create collision detection for mouse
 
@@ -285,7 +291,7 @@ Get the x,y,width,height, create a surface with width\height and draw it"
       (sdl:draw-box-* 0 0 w h :surface surface
 		      :color background))
     (make-instance 'text-field :surface surface :x x :y y :w w :h h :state state
-		   :background background :line-amount line-amount :font font :alpha alpha
+		   :background background :line-amount line-amount :font font :alpha alpha :active active
 		   :text text :text-x text-x :text-y text-y
 
 		   ;; Unsure about hitbox for text-field, might not have one
@@ -369,15 +375,16 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 
 (defun get-longest-line (text-field)
   "Loop through the text in the textfield, to get the sentence that's the longest"
-  (loop for i to (1- (length (get-text text-field)))
-     with text = (get-text text-field)
-     with longest-line = (elt text 0)
-     with current-line
-     finally (return longest-line)
-     do
-       (setf current-line (elt (get-text text-field) i))
-       (when (> (length current-line) (length longest-line))
-	 (setf longest-line current-line))))
+  (when (> (length (get-text text-field)) 0)
+    (loop for i to (1- (length (get-text text-field)))
+       with text = (get-text text-field)
+       with longest-line = (elt text 0)
+       with current-line
+       finally (return longest-line)
+       do
+	 (setf current-line (elt (get-text text-field) i))
+	 (when (> (length current-line) (length longest-line))
+	   (setf longest-line current-line)))))
 
 (defun horizontal-text-size (text-field)
   "The pixel-size of the longest sentence of all the lines"
@@ -388,9 +395,9 @@ Get the x,y,width,height, create a surface with width\height and draw it"
   (- (horizontal-text-size text-field)
      (w text-field)))
 
-;; scrolling
+;; Generic scrolling
 
-(defun scrolly (text-field scroll-bar dir max)
+(defun scrolling (text-field scroll-bar dir max)
   "Handles Horizontal Scrolling"
   (let ((slot (if (string-equal dir 'y) :h :w))
 	(new-pos (scrolling-calc text-field scroll-bar dir max)))
@@ -402,25 +409,29 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 (defun text-scrolling (text-field scroll-bar
 		       &aux (scroll-box (get-scroll-box scroll-bar)))
   "Scrolls the text inside a text-field, with a scroll-bar"
-  (when (scrolling scroll-bar)
+  (when (and (scroll-box scroll-bar) (get-text text-field))
     (when (and (string-equal (get-box-dir scroll-box) 'y)
 	       (> (hidden-vertical-lines text-field) 0)) ; Ensure no scrolling if there are no lines to scroll
-      ;(setf (get-text-y text-field ) (- (vertical-scroll text-field scroll-bar 'y))))
-      
-      (setf (get-text-y text-field ) (- (scrolly text-field scroll-bar 'y (max-vertical-scroll-distance text-field)))))
+      (setf (get-text-y text-field ) (- (scrolling text-field scroll-bar 'y (max-vertical-scroll-distance text-field)))))
     
     (when (string-equal (get-box-dir scroll-box) 'x)
       (let ((max (max-horizontal-scroll-distance text-field)))
-	(when (> max 0)
-	  ;(setf (get-text-x text-field) (- (horizontal-scroll text-field scroll-bar max))))))))
-	  (setf (get-text-x text-field) (- (scrolly text-field scroll-bar 'x max))))))))
+	(when (> max 0) ;; Ensure no scrolling if there are no characters to scroll
+	  (setf (get-text-x text-field) (- (scrolling text-field scroll-bar 'x max))))))))
+
+(defun valid-text-in-field (text)
+  "Ensures there is text to be drawn"
+  (if (> (length (first text)) 0)
+      t))
 
 (defun draw-text-on-text-field (textfield &key text (color (get-color white)))
   "draws lines of text ontop of a text field"
-  (shf:draw-text-with-lines  (if text text (get-text textfield))
-			     (get-surface textfield)
-			     :x-pos (get-text-x textfield) :y-pos (get-text-y textfield)
-			     :font (get-text-font textfield) :color color))
+  (when (or (valid-text-in-field (get-text textfield)) text)
+    (shf:draw-text-with-lines  (if text text
+				   (get-text textfield))
+			       (get-surface textfield)
+			       :x-pos (get-text-x textfield) :y-pos (get-text-y textfield)
+			       :font (get-text-font textfield) :color color)))
 
 (defun new-textfield-surface (textfield)
   ;; Creates a new surface for text-field(To reset text\colors etc)
@@ -498,7 +509,7 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 (defun scroll-box-active-mouse? (scroll-box )
   "Changes the active state of the scroll-box if mouse is clicked on it"
   (and (shf:mouse-collision-check (get-hitbox scroll-box)) (sdl:mouse-left-p)
-       (setf (is-active-box? scroll-box) t)))
+       (setf (is-active? scroll-box) t)))
 
   
 (defun out-of-bounds? (box-pos box-size bar-size)
@@ -526,15 +537,35 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 				(slot-value scroll-bar dir) (slot-value scroll-bar size))))
 ||#
 
-;; Rework scrolling to use relative position
-(defun scrolling (scroll-bar &aux (scroll-box (get-scroll-box scroll-bar))
+
+
+(defun fix-out-of-bounds (scroll-bar &aux (scroll-box (get-scroll-box scroll-bar))
+					   (hitbox (get-hitbox scroll-box)))
+  "Ensures the box isn't out of the bounds of scroll-bar"
+                        ;; slot-value doesn't like the symbol returned by get-box-dir, so we add a new one
+  (let* ((dir-slot (if (string-equal (get-box-dir scroll-box) 'y) 'y 'x))
+	 (size-slot (if (string-equal dir-slot 'y) 'h 'w))
+	 (bounds (out-of-bounds? (slot-value scroll-box dir-slot)
+				 (slot-value scroll-box size-slot)
+				 (slot-value scroll-bar size-slot))))
+
+    (cond ((string-equal bounds 'start)
+	   (setf (slot-value scroll-box dir-slot) 0)
+	   (setf (slot-value hitbox dir-slot) (slot-value scroll-bar dir-slot)))
+	  ((string-equal bounds 'end)
+	   (setf (slot-value scroll-box dir-slot) (- (slot-value scroll-bar size-slot) (slot-value scroll-box size-slot)))
+	   (setf (slot-value hitbox dir-slot) (+ (slot-value scroll-bar dir-slot) (slot-value scroll-box dir-slot)))))))
+
+;; Rework scroll-box to use relative position
+(defun scroll-box (scroll-bar &aux (scroll-box (get-scroll-box scroll-bar))
 			       (hitbox (get-hitbox scroll-box)))
   "Call to automatically check for, and cause scrolling.
 Destructivly change the positions of scroll-bar, scroll-box(and it's hitbox)
 Returns nil if not scrolling"
   (scroll-box-active-mouse? scroll-box)
-
-  (if (is-active-box? scroll-box)
+  (fix-out-of-bounds scroll-bar)
+  
+  (if (is-active? scroll-box)
       (cond ((string-equal (get-box-dir scroll-box) 'y)
 	     (setf (values (y scroll-box) (y hitbox))
 		   (get-new-scroll-box-pos (sdl:mouse-y) (y scroll-bar)  (h scroll-bar)
@@ -545,3 +576,28 @@ Returns nil if not scrolling"
 		   (get-new-scroll-box-pos (sdl:mouse-x) (y scroll-bar) (w scroll-bar)
 					   (x scroll-box) (w scroll-box)))))
       nil))
+
+
+
+(defun input-text-to-field (textfield)
+  (when (is-active? textfield)
+    (let (k u)
+      (setf (values k u) (get-pressed-key))
+
+      
+      
+      (unless (or (string-equal k :sdl-key-RSHIFT) (string-equal k :sdl-key-LSHIFT))
+	(let* ((text-list (get-text textfield))
+	       (text (first (last text-list)))
+	       (length (length (get-text textfield))))
+	  (if (string-equal k :sdl-key-return)
+	      (progn
+		(push nil (cdr (last text-list)))
+		(setf (get-text textfield) text-list)
+		(if (= (get-line-amount textfield) 0)
+		    (incf (get-line-amount textfield) 2)
+		    (incf (get-line-amount textfield)))
+		)
+	      (if (> length 0)
+		  (setf (elt (get-text textfield) (1- length)) (concatenate 'string text (string u)))
+		  (setf (get-text textfield) (list (string u))))))))))

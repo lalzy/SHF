@@ -79,6 +79,7 @@ which is a list of hitboxes that shoyld be automatically drawn"
     (set-x sprite x)
     (dolist (hitbox (get-sprite-hitboxes sprite))
       ;(set-x hitbox (+ x (elt (get-hitbox-rel-pos hitbox) 0)))))
+
       (set-x hitbox (+ x (get-hitbox-rel-x hitbox)))))
   
   (when y

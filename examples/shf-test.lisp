@@ -4,34 +4,41 @@
 
 (in-package #:shf-test)
 
-(defun main3 ()
-
+(defun main4 ()
+  (setf shf:*debug* t)
+  (setf shf:*debug-hitbox-draw* t)
   
-  (let* ((cursor-set nil))
-    (setf shf:*debug* t)
-    (setf shf:*debug-hitbox-draw* t) 
-    (setf SHF:*font-path* "c:/te/")
-    (setf SHF:*fonts* '("Vera.ttf"))
-    ;(setf SHF:*fonts* '("cnr.otf"))
-    
-    ;(with-open-file (stream "c:/te/test.txt" :direction :output :if-exists :supersede) (format stream "testing"))
-    
-    (shf:main-loop
-     :title "tester"
-     :width 800
-     :height 500
-    ; :fps 60
-     :draw-sprites nil
+  (setf SHF:*font-path* "c:/te/")
+  (setf SHF:*fonts* '("Vera.ttf"))
+  
+  (shf:main-loop
+   :title "tester"
+   :width 800
+   :height 500
+   :fps 60
 
-     :init-form (shf:create-cursor "c:/te/cursor.bmp")
-     :key-up-form  (progn (print "up") (print "up2"))
-     :main-form
-     (progn
-       (shf:draw-text "hello again!" #(200 220))
-       (sdl:draw-box-* 370 370 50 50 :color (shf:get-color blue))
-       (shf:draw-text "hello!" #(200 200))
-     )
-)))
+   :quit-form (progn 
+		(format t "quitting!~%"))
+   :init-form 
+   (progn
+     (format t "initializing!~%"))
+
+   :main-form
+   (progn
+     (shf:draw-text "In main!"  #(0 0))
+     (shf:draw-text "Also in main!"  #(0 20)))))
+
+
+(defun main3 ()
+  (shf:new-main
+   (format t "void!")
+   :init (format t "initializing!~%")
+   
+   :main
+     (shf:draw-text "In main!"  #(0 0))
+     (shf:draw-text "Also in main!"  #(0 20))
+
+   :end (format t "quitting!~%")))
 
 
 
@@ -48,7 +55,7 @@
 	(height nil))
     
     (setf shf:*debug* t)
-    ;(setf shf:*debug-hitbox-draw* t)
+    (setf shf:*debug-hitbox-draw* t)
     
     (setf SHF:*font-path* "c:/te/")
     (setf SHF:*fonts* '("Vera.ttf"))
@@ -74,39 +81,37 @@
 	     (tf-y 50)
 	     (font (shf:get-font :size 15)))
 	 (setf (values string lines height) (shf:line-wrapping string tf-w :font font))
-	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :text string :line-amount lines :font font))
-	 ;(setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h
-						; :text'("This is an long text that'll be beyond the actual box for testing purposes, and so this is the end"
-						;	"This is the next line of the long text"
-						;	) :line-amount 2)) 
-	 (setf (elt (shf:get-text text-field) 1) "this is a very long sentence for the sake of testing both type of scrolling and stuff s!")
-
+	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font)) ;:text string :line-amount lines))
 	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 31 :direction 'y :sb-hitbox-color (shf:get-color red) ))
 
 	 
 	 ;))
      (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
-      
+
+     :key-down-form
+     (progn
+       (shf:input-text-to-field text-field))
+     
       ;; Appends the main form \ gameplay-loop
       :main-form
       (progn
-	;;(shf:change-surface-parameters text-field :alpha 150)
-					;(setf (shf:get-surface text-field) (sdl:create-surface 150 150 :alpha 50))
+	(shf:draw-text (format nil "~a , ~a" (sdl:mouse-x) (sdl:mouse-y)) #(0 0))
 
-	;(te text-field scroll-bar)
 	(shf:draw-scroll-bar scroll-bar)
 	(shf:draw-scroll-bar scroll-bar2)
 
-	(shf:draw-text (format nil "~a , ~a" (sdl:mouse-x) (sdl:mouse-y)) #(300 0))
-	
-	;(shf:scrolling scroll-bar)
-	;(shf:scrolling scroll-bar2)
-
+	(setf (shf:is-active? text-field) (shf:mouse-collision-check text-field))
+	;(setf (shf:is-active? text-field) )
+#||
+	(if (shf:mouse-collision text-field)
+	    (setf (shf:is-active? text-field) t)
+	    (setf (shf:is-active? text-field nil)))
+||#
 	(shf:text-scrolling text-field scroll-bar )
 	(shf:text-scrolling text-field scroll-bar2 )
 
 	(shf:draw-text-field-with-text text-field :color (shf:get-color blue))
-
+	
        ;(shf:draw-hitboxes)
 
       ))))
