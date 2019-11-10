@@ -12,6 +12,7 @@
   (setf SHF:*fonts* '("Vera.ttf"))
   
   (shf:main-loop
+   
    :title "tester"
    :width 800
    :height 500
@@ -22,22 +23,30 @@
    :init-form 
    (progn
      (format t "initializing!~%"))
-
+   
    :main-form
    (progn
      (shf:draw-text "In main!"  #(0 0))
-     (shf:draw-text "Also in main!"  #(0 20)))))
+     (shf:draw-text "Also in main12!"  #(0 20)))))
 
 
 (defun main3 ()
   (shf:new-main
    (format t "void!")
    :init (format t "initializing!~%")
+
+   :title "hgjhg"
+   :width 500
+   :height 500
+   :fps 90
    
    :main
-     (shf:draw-text "In main!"  #(0 0))
-     (shf:draw-text "Also in main!"  #(0 20))
-
+   (shf:draw-text "In main!"  #(0 20))
+   (shf:draw-text "Also in main!"  #(0 40))
+   (shf:draw-text
+    (format nil "~a" (round (sdl:average-fps)))
+    #(0 0))
+   
    :end (format t "quitting!~%")))
 
 
@@ -71,7 +80,7 @@
      ;:borderless t
      ;; Appends the init-form:
      :quit-form (progn 
-	(shf:empty-sprite-group))
+		  (shf:empty-sprite-group))
      :init-form 
      (progn
        

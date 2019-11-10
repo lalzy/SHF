@@ -339,42 +339,83 @@
 
 ;; Can't return it, for unkown reasons
 
-(defun is-keyword (item)
-  (case item ((:main :end :init) t)))
 
-(defmacro key-sort (args &aux (main-part (gensym)) (start-part (gensym))
-			   (init-part (gensym)))
+
+;; All passable keywords
+(defparameter *keywords* '(:main :end :init :fps :width :height))
+
+(defun is-keyword (item)
+  (member item *keywords*))
+
+(defmacro key-sort (args 
+		    &aux (main-form (gensym)) (end-form (gensym))
+			   (init-form (gensym)) (tmp-fps (gensym)) (window-params (gensym)))
   "Sorts"
   `(let ((list '(,@args))
-	 (,main-part)
-	 (,init-part)
-	 (,start-part))
+	 (,main-form)
+	 (,init-form)
+	 (,end-form)
+	 (,tmp-fps 60)
+	 (,window-params))
      (loop for item in list
         with current
-	  finally (setf ,main-part (reverse ,main-part))
 	do
 
+
 	  (case item 
-	    ((:main :end :init) (setf current item)))
+	    (,*keywords* (setf current item)))
 
 	  (unless (is-keyword item)
+	    
+	    (case current
+	      (:main (push item ,main-form))
+	      (:width (setf *width* item))
+	      (:height (setf *height* item))
+	      (:fps (setf ,tmp-fps item))
+	      (:init (push item ,init-form))
+	      (:end (push item ,end-form)))))
+     
+     (values ,tmp-fps (reverse ,init-form) (reverse ,main-form) (reverse ,end-form) )))
+
+
+  #||
 	    (cond ((string-equal current :main)
 		   (push item ,main-part))
 		  ((string-equal current :end)
-		   (push item ,start-part))
+		   (push item ,end-part))
 		  ((string-equal current :init)
 		   (push item ,init-part)))))
-     (values ,init-part ,main-part ,start-part)))
+||#
+
+(defun is-function? (symbol)
+  "Checks if the passed symbol is a function"
+  (if (symbolp symbol)
+      (functionp (symbol-function symbol))))
+
 
 (defun run-form (form-list)
+  "Runs through the list in the form and evaluates it"
   (mapcar #'(lambda (x)
-	      (apply (first x) (rest x))) form-list))
+	      ;; Old non-eval code, doesn't work as we might have nested function calls inside
+	      ;;     the function passed that doesn't get evaluated properly
+	      #|(and (listp x) (is-function? (first x))
+	           (apply (first x) (rest x)))|#
+
+	      
+	      ;; So instead, we evaluate the code here
+	      (eval x))
+	  form-list))
 
 ;; Make other keywords
 ;; ALternativly, (&key ) for keywords
-(defmacro new-main ( &rest args &aux (font (gensym)) (main-form (gensym)) (quit-form (gensym)) (init-form (gensym)))
-  `(let (,main-form)
-     (setf (values ,init-form ,main-form ,quit-form) (key-sort ,args))
+(defmacro new-main ( &rest args &aux (font (gensym)) (main-form (gensym))
+				  (end-form (gensym)) (init-form (gensym)) (tmp-fps (gensym)))
+  "Main sdl loop"
+  ;; Change to use window-param
+  (setf *width* 800)
+  (setf *height* 640)
+  `(let (,main-form ,init-form ,end-form ,tmp-fps)
+     (setf (values ,tmp-fps ,init-form ,main-form ,end-form) (key-sort ,args))
      
      
      (sdl:with-init ()
@@ -385,15 +426,15 @@
 				 :size 15
 				 :filename  "c:/te/vera.ttf")))
 	(sdl:initialise-default-font ,font))
-      (sdl:window 800 640 :title-caption "new-main-test")
+      (sdl:window *width* *height* :title-caption "new-main-test")
 
       (run-form ,init-form)
 
       
-      (setf (sdl:frame-rate) 60)
+      (setf (sdl:frame-rate) ,tmp-fps)
       
       (sdl:with-events ()
-		  (:quit-event () (run-form ,quit-form) t) 
+		  (:quit-event () (run-form ,end-form) t) 
 
 		  (:idle ()
 			 (sdl:clear-display (get-color black))

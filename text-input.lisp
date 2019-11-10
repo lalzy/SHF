@@ -485,14 +485,15 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 ;; Rewrite so size is better created, more similar to text editors
 (defun calculate-scroll-box-height (scroll-bar text-height line-amount &key (min-size 5))
   ""
-      (let* ((max (round (/ (h scroll-bar) text-height )))
+      (let* ((max (round (h scroll-bar) text-height)) ;(round (/ (h scroll-bar) text-height )))
 	     (hidden-vertical-lines (- line-amount max))
 	     (height (if (<= hidden-lines 0)
 			 0
-		    (round (/ (h scroll-bar)
+			 (round (h scroll-bar) (if (= hidden-lines 1) 2 hidden-lines)
+				#||(/ (h scroll-bar)
 			      
 			      ;; Allows scrolling if only one line is hidden
-			      (if (= hidden-lines 1) 2 hidden-lines))))))
+			      (if (= hidden-lines 1) 2 hidden-lines))||#))))
 	      ;; If there are no lines hidden from view, make the scroll-box an height of 0
 	(values (if (< height min-size) min-size height)
 		max)))
@@ -522,13 +523,13 @@ Get the x,y,width,height, create a surface with width\height and draw it"
 (defun get-new-scroll-box-pos (mouse-pos bar-pos bar-size box-pos  box-size)
   "Returns the new position of the scroll box and it's hitbox in relative to the mouse position"
   (let ((bounds (out-of-bounds? box-pos box-size bar-size)))
-    (cond ((and (string-equal bounds 'start) (< mouse-pos (+ bar-pos (round (/ box-size 2)))))
+    (cond ((and (string-equal bounds 'start) (< mouse-pos (+ bar-pos (round box-size 2 #||(/ box-size 2)||#))))
 	   (values 0 bar-pos))
-	  ((and (string-equal bounds 'end) (> mouse-pos (- (+ bar-size bar-pos) (round (/ box-size 2)))))
+	  ((and (string-equal bounds 'end) (> mouse-pos (- (+ bar-size bar-pos) (round box-size 2 #||(/ box-size 2)||#))))
 	   (values (- bar-size box-size)
 		   (+ bar-pos box-pos)))
-	  (t (values (- (- mouse-pos bar-pos) (round (/ box-size 2)))
-		     (- mouse-pos (round (/ box-size 2))))))))
+	  (t (values (- (- mouse-pos bar-pos) (round box-size 2 #||(/ box-size 2)||#))
+		     (- mouse-pos (round box-size 2 #||(/ box-size 2)||#)))))))
 #||
 (defun set-scroll-box-pos (dir size scroll-bar mouse &aux (scroll-box (get-scroll-box scroll-bar))
 					    (hitbox (get-hitbox scroll-box)))
