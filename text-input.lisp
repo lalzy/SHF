@@ -258,8 +258,8 @@
 (defun check-key (char)
   "checks if passed char is the pressed key"
   (when *key-pressed-code*
-    (if (equalp char (code-char *key-pressed-code*))
-	(code-char *key-pressed-code*)
+    (if (equalp char (code-char (elt *key-pressed-code* 1)))
+	(code-char (elt *key-pressed-code* 1))
 	nil)))
 
 

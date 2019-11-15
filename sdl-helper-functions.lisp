@@ -219,7 +219,6 @@
      ,@body))
 
 
-
 (defmacro main-loop (&key (width nil) (height nil) (fps 120) (title "test") (icon nil) (fullscreen nil) (borderless nil)
 		       (draw-sprites t) (default-font nil) (capture-mouse nil)
 		       init-form (quit-form t) main-form end-form pre-loop-form
@@ -238,22 +237,7 @@
      init-form takes a function and will run it before the main loop.
      quit-form take a function and will run them at quit-event
      main-form take a function and will run it every frame of the main loop
-     end-form take a function and will run at end of program even if it crashes"
-  ;; Doesn't quit when an un-handleded error message occur as long as *debug* is on
-
-  #||
-      ;; Starts SDL and creates a window
-      `(sdl:with-init ()
-	 (init ,width ,height ,fps ,capture-mouse ,default-font)
-	 ,init-form ; Our init form, a list of functions that'll run at this point
-
-	 
-	 (let ((,position (when ,borderless #(0 0))))
-	   (sdl:window *width* *height* :title-caption ,title :no-frame ,borderless
-		       :fullscreen ,fullscreen :position ,position))
-	 
-	 (setf (sdl:frame-rate) ,fps)
-  ||#
+     end-form take a function and will run at end of program even if it crashes"  
   `(with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,default-font ,capture-mouse ,init-form 
 	       
 	 ;; Event Loops
@@ -262,7 +246,7 @@
 		    (previous-y nil)
 		    (move-dir nil))
 		(sdl:with-events ()
-		  (:quit-event () ,quit-form t) ; Our quit form, same concept as init-form
+		  (:quit-event () ,quit-form (empty-sprite-group) t) ; Our quit form, same concept as init-form
 		  (:key-down-event (:key key :unicode unicode)
 				   ;; Adds key presses to global variables
 				   (setf *key-pressed-code* (list key unicode))
@@ -292,6 +276,7 @@
 		  (:idle () ; Main-loop, clears and updates display
 
 			 (sdl:clear-display (get-color black))
+
 			 ,main-form ; Our main form, which consist of the actual game logic
 			     
 			 ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
@@ -342,56 +327,55 @@
 
 
 ;; All passable keywords
-(defparameter *keywords* '(:main :end :init :fps :width :height))
+(defparameter *keywords* '(:main :end :init :fps :width :height :key-down-event :key-up-event
+			   :mouse-motion-event :mouse-down-event :mouse-up-event))
 
 (defun is-keyword (item)
+  "Checks if item is a keyword symbol"
   (member item *keywords*))
 
-(defmacro key-sort (args 
-		    &aux (main-form (gensym)) (end-form (gensym))
-			   (init-form (gensym)) (tmp-fps (gensym)) (window-params (gensym)))
+(defmacro key-sort (args &aux (main-form (gensym)) (end-form (gensym)) (init-form (gensym)) (key-down-form (gensym))
+			   (key-up-form (gensym)) (mouse-motion-form (gensym)) (mouse-down-form (gensym)) (mouse-up-form (gensym))
+			   (tmp-fps (gensym)) (window-params (gensym)))
   "Sorts"
-  `(let ((list '(,@args))
-	 (,main-form)
-	 (,init-form)
-	 (,end-form)
+  `(let (,main-form ,init-form ,end-form ,key-down-form
+	 ,key-up-form ,mouse-motion-form ,mouse-down-form ,mouse-up-form
 	 (,tmp-fps 60)
 	 (,window-params))
-     (loop for item in list
-        with current
-	do
-
+     (loop for item in ,args
+        with current do
 
 	  (case item 
 	    (,*keywords* (setf current item)))
-
+	  
+	;; Add the correct argument to the correct variable for return
 	  (unless (is-keyword item)
-	    
 	    (case current
 	      (:main (push item ,main-form))
 	      (:width (setf *width* item))
 	      (:height (setf *height* item))
 	      (:fps (setf ,tmp-fps item))
 	      (:init (push item ,init-form))
+	      (:key-down-event (push item ,key-down-form))
+	      (:key-up-event (push item ,key-up-form))
+	      (:mouse-motion-event (push item ,mouse-motion-form))
+	      (:mouse-down-event (push item ,mouse-down-form))
+	      (:mouse-up-event (push item ,mouse-up-form))
 	      (:end (push item ,end-form)))))
-     
-     (values ,tmp-fps (reverse ,init-form) (reverse ,main-form) (reverse ,end-form) )))
 
+     ;; Returns the sorted arguments as values,
+     ;;   reverse the lists so that we get the correct order that was passed
+     (values ,tmp-fps (reverse ,init-form) (reverse ,main-form) (reverse ,end-form) (reverse ,key-down-form) (reverse ,key-up-form)
+	     (reverse ,mouse-motion-form) (reverse ,mouse-down-form) (reverse ,mouse-up-form))))
 
-  #||
-	    (cond ((string-equal current :main)
-		   (push item ,main-part))
-		  ((string-equal current :end)
-		   (push item ,end-part))
-		  ((string-equal current :init)
-		   (push item ,init-part)))))
-||#
+#||
+Not used because we don't use the old apply version of run-form
 
 (defun is-function? (symbol)
   "Checks if the passed symbol is a function"
   (if (symbolp symbol)
       (functionp (symbol-function symbol))))
-
+||#
 
 (defun run-form (form-list)
   "Runs through the list in the form and evaluates it"
@@ -406,39 +390,87 @@
 	      (eval x))
 	  form-list))
 
+
 ;; Make other keywords
 ;; ALternativly, (&key ) for keywords
-(defmacro new-main ( &rest args &aux (font (gensym)) (main-form (gensym))
-				  (end-form (gensym)) (init-form (gensym)) (tmp-fps (gensym)))
+(defmacro new-main ( &rest args &aux (font (gensym)) (main-form  (gensym)) (key-down-form (gensym)) (key-up-form (gensym))
+				  (mouse-motion-form (gensym)) (mouse-down-form (gensym)) (mouse-up-form (gensym))
+				  (end-form  (gensym)) (init-form  (gensym)) (tmp-fps (gensym) ))
   "Main sdl loop"
   ;; Change to use window-param
   (setf *width* 800)
   (setf *height* 640)
-  `(let (,main-form ,init-form ,end-form ,tmp-fps)
-     (setf (values ,tmp-fps ,init-form ,main-form ,end-form) (key-sort ,args))
-     
-     
-     (sdl:with-init ()
-       (sdl:init-video)
-       (sdl:enable-unicode)
-       ;; Attempts to initialize the default font
-       (let ((,font (make-instance 'sdl:ttf-font-definition
-				 :size 15
-				 :filename  "c:/te/vera.ttf")))
-	(sdl:initialise-default-font ,font))
-      (sdl:window *width* *height* :title-caption "new-main-test")
+  `(progn
+     (multiple-value-bind (,tmp-fps ,init-form ,main-form ,end-form ,key-down-form ,key-up-form
+				    ,mouse-motion-form ,mouse-down-form ,mouse-up-form)
+	 (key-sort '(,@args))
+       (sdl:with-init ()
+	 (sdl:init-video)
+	 (sdl:enable-unicode)
+	 ;; Attempts to initialize the default font
+	 (let ((,font (make-instance 'sdl:ttf-font-definition
+				     :size 15
+				     :filename  "c:/te/vera.ttf")))
+	   (sdl:initialise-default-font ,font))
+	 (sdl:window *width* *height* :title-caption "new-main-test")
 
-      (run-form ,init-form)
+	 (run-forms ,init-form)
 
-      
-      (setf (sdl:frame-rate) ,tmp-fps)
-      
-      (sdl:with-events ()
-		  (:quit-event () (run-form ,end-form) t) 
+	 
+	 (setf (sdl:frame-rate) ,tmp-fps)
+	 
+	 (sdl:with-events ()
+	   (:quit-event () (run-form ,end-form)
+			t)
+	   (:key-down-event (:key key :unicode unicode) (run-form ,key-down-form))
+	   (:key-up-event (:key key :unicode unicode) (run-form ,key-up-form))
+	   (:mouse-motion-event (:state state :x x :y y) (run-form ,mouse-motion-form))
+	   (:mouse-button-down-event (:BUTTON BUTTON :STATE STATE :X X :Y Y) (run-form ,mouse-down-form))
+	   (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y) (run-form ,mouse-up-form))
+  
+	   (:idle ()
+		  (sdl:clear-display (get-color black))
+		  (run-form ,main-form)
+		  ;; Update display
+		  (sdl:update-display)))))))
 
-		  (:idle ()
-			 (sdl:clear-display (get-color black))
-			 (run-form ,main-form)
-			 
-			 ;; Update display
-			 (sdl:update-display))))))
+
+#||
+(WITH-EVENTS (TYPE)
+ (:ACTIVE-EVENT (:GAIN GAIN :STATE STATE)
+    ... )
+ (:KEY-DOWN-EVENT (:STATE STATE :SCANCODE SCANCODE :KEY KEY :MOD MOD :UNICODE UNICODE)
+    ... )
+ (:KEY-UP-EVENT (:STATE STATE :SCANCODE SCANCODE :KEY KEY :MOD MOD :UNICODE UNICODE)
+    ...)
+ (:MOUSE-MOTION-EVENT (:STATE STATE :X X :Y Y :X-REL X-REL :Y-REL Y-REL)
+    ...)
+ (:MOUSE-BUTTON-DOWN-EVENT (:BUTTON BUTTON :STATE STATE :X X :Y Y)
+    ...)
+ (:MOUSE-BUTTON-UP-EVENT (:BUTTON BUTTON :STATE STATE :X X :Y Y)
+    ...)
+ (:JOY-AXIS-MOTION-EVENT (:WHICH WHICH :AXIS AXIS :VALUE VALUE)
+    ...)
+ (:JOY-BUTTON-DOWN-EVENT (:WHICH WHICH :BUTTON BUTTON :STATE STATE)
+    ...)
+ (:JOY-BUTTON-UP-EVENT (:WHICH WHICH :BUTTON BUTTON :STATE STATE)
+    ...)
+ (:JOY-HAT-MOTION-EVENT (:WHICH WHICH :HAT HAT :VALUE VALUE)
+    ...)
+ (:JOY-BALL-MOTION-EVENT (:WHICH WHICH :BALL BALL :X-REL X-REL :Y-REL Y-REL)
+    ...)
+ (:VIDEO-RESIZE-EVENT (:W W :H H)
+    ...)
+ (:VIDEO-EXPOSE-EVENT ()
+    ...)
+ (:SYS-WM-EVENT ()
+    ...)
+ (:USER-EVENT (:TYPE TYPE :CODE CODE :DATA1 DATA1 :DATA2 DATA2)
+    ...)
+ (:QUIT-EVENT ()
+    ...
+    T)
+ (:IDLE ()
+    ... )) 
+ ||#
+	 
