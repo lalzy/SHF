@@ -35,7 +35,7 @@
 
 (defun main3 ()
 
-  (let ((x2 -50) (y2 -50))    
+  (let ((x2 -50) (y2 -50))
     (shf:new-main
      (format t "void!")
      :init (format t "initializing!~%")
