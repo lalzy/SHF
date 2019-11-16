@@ -153,34 +153,24 @@ so end position uses standard non-range collision"
 	  (when (equalp name-check (shf:get-hitbox-name obj))
 	    (return-from function name-check)))))))
 
-(defgeneric mouse-collision-check (object)
+(defgeneric mouse-collision-check (object &optional mouse)
   (:documentation "Collision checking between object and the current position of the mouse"))
 
 
-(defmethod mouse-collision-check ((object sprite-class))
+(defmethod mouse-collision-check ((object sprite-class) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (let ((col nil)
 	(hitbox nil))
     (loop-hitbox object hitbox ; Loop through and do collision check on the individual hitboxes of the sprite
 	 (let ((res nil))
 	   (if (string= (type-of hitbox) 'hitbox-rect)
 	       (setf res (pixel-rect-collision-check (x hitbox) (y hitbox) (w hitbox)
-						     (h hitbox) (sdl:mouse-x)  (sdl:mouse-y)))
+						     (h hitbox) (elt mouse 0) (elt mouse 1)))
 	       (setf res (pixel-circle-collision-check (x hitbox) (y hitbox) (r hitbox)
-					     (sdl:mouse-x) (sdl:mouse-y))))
+					     (elt mouse 0) (elt mouse 1))))
 		 (when res
 		   (push hitbox col))))
     (list col)))
 
-
-(defun mouse-text-collision (text x y  &key (font sdl:*default-font*) (name text))
-  (if (pixel-rect-collision-check
-       x y
-       (sdl:get-font-size text :size :w :font font) ; width of text field
-       (sdl:get-font-size text :size :h :font font) ; height of text field
-       (sdl:mouse-x) (sdl:mouse-y))
-      
-      name
-      nil))
 #||
 (defmethod mouse-collision-check ((object vector))
   "text collision, done by passing a vector consisting of 0-string, 1-Xpos, 2-Ypos, 4-font,  optional 5th parameter is collision name"
@@ -200,14 +190,24 @@ so end position uses standard non-range collision"
 	  nil)))
 ||#
 
-(defmethod mouse-collision-check ((object circle))
-  (if (pixel-circle-collision-check (x object) (y object) (r object) (sdl:mouse-x) (sdl:mouse-y))
+(defmethod mouse-collision-check ((object circle) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
+  (if (pixel-circle-collision-check (x object) (y object) (r object) (elt mouse 0) (elt mouse 1))
       object
       nil))
 
-(defmethod mouse-collision-check ((object rect))
-  (if (pixel-rect-collision-check (x object) (y object) (w object) (h object) (sdl:mouse-x) (sdl:mouse-y))
+(defmethod mouse-collision-check ((object rect) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
+  (if (pixel-rect-collision-check (x object) (y object) (w object) (h object) (elt mouse 0) (elt mouse 1))
       object
+      nil))
+
+(defun mouse-text-collision (text x y  &key (font sdl:*default-font*) (name text))
+  (if (pixel-rect-collision-check
+       x y
+       (sdl:get-font-size text :size :w :font font) ; width of text field
+       (sdl:get-font-size text :size :h :font font) ; height of text field
+       (sdl:mouse-x) (sdl:mouse-y))
+      
+      name
       nil))
 
 ;(defmethod mouse-collision-check (object)

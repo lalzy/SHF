@@ -5,13 +5,13 @@
   :description "Describe sdl-helper-functions here"
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
-  :depends-on (#:shf-error-handling ; remove commented file when done
+  :depends-on (#:shf-error-handling 
+	       #:cffi
 	       #:alexandria
 	       #:uiop
 	       #:cl-utilities
                #:bt-semaphore
 	       #:cl-unicode
-	      ; #:cffi
                #:lispbuilder-sdl
                #:lispbuilder-sdl-mixer
                #:lispbuilder-sdl-ttf
@@ -19,11 +19,27 @@
                #:lispbuilder-sdl-gfx)
   :serial t
   :components ((:file "package")
+	       
+	       ;; Core building blocks
 	       (:file "Shape-classes")
+
+	       ;; Image\Sprites
 	       (:file "sprites")
+
+	       ;; Collision\Physics
 	       (:file "collision-checks")
-	       (:file "states")
+	       
+	       ;; Sound
 	       (:file "sound-system")
-	       (:file "text-input")
+
+	       ;; Text
+	       (:file "text-output") ; Fonts, Text
+	       (:file "scrollbars")
+	       (:file "controll-input") ;K&M primarily
+	       (:file "textfield")
+	       (:file "text-input") ; Input into textfield
+
+	       ;; Main
+	       (:file "states")
                (:file "sdl-helper-functions")))
 

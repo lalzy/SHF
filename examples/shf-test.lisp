@@ -30,11 +30,10 @@
    (progn
      (sdl:draw-box-* x2 y2 5 5 :color (shf:get-color green))
      (shf:draw-text "In main!"  #(0 0))
-     (shf:draw-text "Also in main12!"  #(0 20)))))
-)
+     (shf:draw-text "Also in main12!"  #(0 20))))))
+
 
 (defun main3 ()
-
   (let ((x2 -50) (y2 -50))
     (shf:new-main
      (format t "void!")
@@ -47,7 +46,7 @@
      
      :key-down-event (format t "pressed!~%")
      :key-up-event (format t "released!~%")
-     :mouse-down-event (setf x (- (sdl:mouse-x) 3) y (- (sdl:mouse-y) 3))
+     :mouse-down-event (setf x2 (- (sdl:mouse-x) 3) y2 (- (sdl:mouse-y) 3))
      
      :main
      

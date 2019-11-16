@@ -3,6 +3,16 @@
 (defparameter *sprite-group* nil) ; Group of sprites to be drawn
 (defparameter *hitbox-draw-group* nil) ; Group of hitboxes to be drawn(if in debug)
 
+
+(defgeneric change-surface (object &key alpha))
+
+
+(defmethod change-surface (object  &key alpha)
+  (let* ((old-surface (get-surface object))
+	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface))))
+    (setf (get-surface object) surface)))
+
+
 ;; Sprite class
 (defclass sprite-class (rect) 
   ((sprite

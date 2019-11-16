@@ -93,139 +93,60 @@
 
 (defparameter *debug* nil) ; Debugging mode
 (defparameter *debug-hitbox-draw* nil) ; Drawing the hitboxes
-(defparameter *Current-mouse-button* nil)
-(defparameter *mouse-state* 0)
-(defparameter *mouse-move-direction* #(none none))
-(defparameter *cursor* nil)
-(defparameter **cursor-offset** nil)
-;(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
-(defparameter *scroll-boxes-list* nil) ; List of scroll boxes for the use of emptying when not clicked
+					;(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
 
-(defun CFFI-init ()
-  (cffi:define-foreign-library sdl
-      (:windows "sdl.dll"))
-  (cffi:use-foreign-library sdl)
-  
-  (cffi:defcfun ("SDL_WarpMouse" warp-mouse-at-*) :void
-    (x :unsigned-short)
-    (y :unsigned-short)))
+(defmacro with-window (width height fps title icon fullscreen borderless default-font capture-mouse init-form &body body)
+  (alexandria:with-gensyms (position font)
+    `(sdl:with-init ()
+       ;;(init ,width ,height ,fps ,capture-mouse ,default-font)
 
-  ;; Create alternative mouse-setter
-(defun warp-mouse (point)
-  (when (or (not (vectorp point)) (> (length point) 2))
-    (error "Only accepts a vector of 2 cordinate points(x|y)"))
-  (warp-mouse-at-* (elt point 0) (elt point 1)))
-
-
-(defun create-cursor (img-src &key (offset #(0 0)) (color-key #(0 0)))
-  "Creates a custom mouse-cursor from an image"
-  (setf *cursor* (sdl:blit-surface
-		  (sdl:load-image "c:/te/cursor.bmp" :color-key-at color-key))
-	*cursor-offset* offset)
-  (sdl:show-cursor nil))
-
-#||
-(defun init (width height fps capture-mouse default-font)
-  "Initialisation"
-  
-  (sdl:init-video)
-  (sdl:enable-unicode)
-  (if width
-      (setf *width* width)
-      (setf *width* (elt (sdl:video-dimensions) 0)))
-  
-  (if height
-      (setf *height* height)
-      (setf *height* (elt (sdl:video-dimensions) 1)))
-
-  (when capture-mouse
-    (sdl:sdl-wm-grab-input :sdl-grab-on))
-
-    
+       
+       (sdl:init-video)
+       (sdl:enable-unicode)
+       (if ,width
+	   (setf *width* ,width)
+	   (setf *width* (elt (sdl:video-dimensions) 0)))
+       
+       (if ,height
+	   (setf *height* ,height)
+	   (setf *height* (elt (sdl:video-dimensions) 1)))
+       
+       (when ,capture-mouse
+	 (sdl:sdl-wm-grab-input :sdl-grab-on))
+       
+       
        ;; Attempts to initialize the default font
-       (shf-error:try-retry (let ((font (if default-font
-					    default-font
-					    (make-instance 'sdl:ttf-font-definition
-							   :size *font-size*
-							   :filename  (merge-pathnames (first *fonts*) *font-path*)))))
-			      (sdl:initialise-default-font font))
-			    :text (format nil "Cannot initialize the default font: ~a ~a ~a"  (elt *fonts* 0) " in " *font-path*))
+       (shf-error:try-retry (let ((,font (if ,default-font
+					     ,default-font
+					     (make-instance 'sdl:ttf-font-definition
+							    :size *font-size*
+							    :filename  (merge-pathnames (first *fonts*) *font-path*)))))
+			      (sdl:initialise-default-font ,font))
+			    :text (format nil "Cannot initialize the default font: ~a ~a ~a"
+					  (elt *fonts* 0) " in " *font-path))
        
-
-       (sdl-mixer:open-audio :frequency *sound-frequency*)
-       (CFFI-init)
-       )
-
-||#
-(defun mouse-move-direction (old-x x old-y y)
-  "Get the direction the mouse is moving"
-  (let ((vertical (cond
-		    ((= old-y y) 'none)
-		    ((> old-y y) 'up)
-		    (t 'down)))
-	
-	(horizontal (cond ((= old-x x) 'none)
-			  ((> old-x x) 'left)
-			  (t 'right))))
-    
-    (vector horizontal vertical)))
-
-
-(defmacro with-window (width height fps title icon fullscreen borderless default-font capture-mouse init-form &body body
-		       &aux (position (gensym))
-			 (font (gensym)))
-  `(sdl:with-init ()
-     ;;(init ,width ,height ,fps ,capture-mouse ,default-font)
-
-  
-     (sdl:init-video)
-     (sdl:enable-unicode)
-     (if ,width
-	 (setf *width* ,width)
-	 (setf *width* (elt (sdl:video-dimensions) 0)))
-     
-     (if ,height
-	 (setf *height* ,height)
-	 (setf *height* (elt (sdl:video-dimensions) 1)))
-     
-     (when ,capture-mouse
-       (sdl:sdl-wm-grab-input :sdl-grab-on))
-     
-     
-     ;; Attempts to initialize the default font
-     (shf-error:try-retry (let ((,font (if ,default-font
-					  ,default-font
-					  (make-instance 'sdl:ttf-font-definition
-							 :size *font-size*
-							 :filename  (merge-pathnames (first *fonts*) *font-path*)))))
-			    (sdl:initialise-default-font ,font))
-			  :text (format nil "Cannot initialize the default font: ~a ~a ~a"
-					(elt *fonts* 0) " in " *font-path))
-     
-     
+       
        (sdl-mixer:open-audio :frequency *sound-frequency*)
        (CFFI-init)
        
 
-     
-     ,init-form ; Our init form, a list of functions that'll run at this point
-     
-     
-     (let ((,position (when ,borderless #(0 0))))
-       (sdl:window *width* *height* :title-caption ,title :no-frame ,borderless
-		   :fullscreen ,fullscreen :position ,position))
-     
-     (setf (sdl:frame-rate) ,fps)
-     ,@body))
+       
+       ,init-form ; Our init form, a list of functions that'll run at this point
+       
+       
+       (let ((,position (when ,borderless #(0 0))))
+	 (sdl:window *width* *height* :title-caption ,title :no-frame ,borderless
+		     :fullscreen ,fullscreen :position ,position))
+       
+       (setf (sdl:frame-rate) ,fps)
+       ,@body)))
 
 
 (defmacro main-loop (&key (width nil) (height nil) (fps 120) (title "test") (icon nil) (fullscreen nil) (borderless nil)
 		       (draw-sprites t) (default-font nil) (capture-mouse nil)
 		       init-form (quit-form t) main-form end-form pre-loop-form
 		       mouse-button-down-form mouse-button-up-form mouse-motion-form
-		       key-down-form key-up-form
-		       ;; Local variable gensym
-		     &aux (position (gensym)))
+		       key-down-form key-up-form)
   
   "Keywords:
      fps - Target Frames Per Second
@@ -237,77 +158,78 @@
      init-form takes a function and will run it before the main loop.
      quit-form take a function and will run them at quit-event
      main-form take a function and will run it every frame of the main loop
-     end-form take a function and will run at end of program even if it crashes"  
-  `(with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,default-font ,capture-mouse ,init-form 
-	       
-	 ;; Event Loops
-	 (unwind-protect
-	      (let ((previous-x nil)
-		    (previous-y nil)
-		    (move-dir nil))
-		(sdl:with-events ()
-		  (:quit-event () ,quit-form (empty-sprite-group) t) ; Our quit form, same concept as init-form
-		  (:key-down-event (:key key :unicode unicode)
-				   ;; Adds key presses to global variables
-				   (setf *key-pressed-code* (list key unicode))
-				   (setf *key-pressed-state* (sdl:key-state-p))
-				   ,key-down-form)
-		  (:key-up-event (:key key :unicode unicode)
-				 ;; Removes keypresses from global variables
-				 (setf *key-pressed-code* (list nil unicode))
-				 (setf *key-pressed-state* (sdl:key-state-p))
-				  ,key-up-form
-				 )
-		  (:mouse-button-down-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
-					    (setf *current-mouse-button* button
-						  *mouse-state* state)
-					    ,mouse-button-down-form)
+     end-form take a function and will run at end of program even if it crashes"
+  (alexandria:with-gensyms (position)
+    `(with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,default-font ,capture-mouse ,init-form 
 		  
-		  (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
-					  (setf *current-mouse-button* button
-						*mouse-state* state)
-					  (dolist (sb *scroll-boxes-list*)
-					    (setf (is-active? sb) nil))
-					  ,mouse-button-up-form)
-		  
-		  (:mouse-motion-event (:state state :x x :y y)
-				       (setf *mouse-move-direction* (mouse-move-direction previous-x x previous-y y)))
-				       ,mouse-motion-form
-		  (:idle () ; Main-loop, clears and updates display
+		  ;; Event Loops
+		  (unwind-protect
+		       (let ((previous-x nil)
+			     (previous-y nil)
+			     (move-dir nil))
+			 (sdl:with-events ()
+			   (:quit-event () ,quit-form (empty-sprite-group) t) ; Our quit form, same concept as init-form
+			   (:key-down-event (:key key :unicode unicode)
+					    ;; Adds key presses to global variables
+					    (setf *key-pressed-code* (list key unicode))
+					    (setf *key-pressed-state* (sdl:key-state-p))
+					    ,key-down-form)
+			   (:key-up-event (:key key :unicode unicode)
+					  ;; Removes keypresses from global variables
+					  (setf *key-pressed-code* (list nil unicode))
+					  (setf *key-pressed-state* (sdl:key-state-p))
+					  ,key-up-form
+					  )
+			   (:mouse-button-down-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
+						     (setf *current-mouse-button* button
+							   *mouse-state* state)
+						     ,mouse-button-down-form)
+			   
+			   (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
+						   (setf *current-mouse-button* button
+							 *mouse-state* state)
+						   (dolist (sb *scroll-boxes-list*)
+						     (setf (is-active? sb) nil))
+						   ,mouse-button-up-form)
+			   
+			   (:mouse-motion-event (:state state :x x :y y)
+						(setf *mouse-move-direction* (mouse-move-direction previous-x x previous-y y)))
+			   ,mouse-motion-form
+			   (:idle () ; Main-loop, clears and updates display
 
-			 (sdl:clear-display (get-color black))
+				  (sdl:clear-display (get-color black))
 
-			 ,main-form ; Our main form, which consist of the actual game logic
-			     
-			 ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
-			 (when ,draw-sprites
-			   (draw-sprites) 
-			   (draw-hitboxes))
+				  ,main-form ; Our main form, which consist of the actual game logic
+				  
+				  ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
+				  (when ,draw-sprites
+				    (draw-sprites) 
+				    (draw-hitboxes))
 
 
-			 ;; Test later after changing to Norwegian computer
-#||
-			 (draw-text (format nil "random-test - ~a" (sdl:GET-GLYPH-METRIC #\a :metric :maxy))
-				    #(0 50))
+				  ;; Test later after changing to Norwegian computer
+				  #||
+				  (draw-text (format nil "random-test - ~a" (sdl:GET-GLYPH-METRIC #\a :metric :maxy))
+				  #(0 50))
 
-			 ||#
-			 ;; Mouse direction
-			 (setf previous-x (sdl:mouse-x)
-			       previous-y (sdl:mouse-y))
-			 
-			 (setf *mouse-move-direction* #(none none))
+				  ||#
+				  ;; Mouse direction
+				  (setf previous-x (sdl:mouse-x)
+					previous-y (sdl:mouse-y))
+				  
+				  (setf *mouse-move-direction* #(none none))
 
-			 ;; Draws custom cursor
-			 (when *cursor*
-			   (sdl:draw-surface-at *cursor* (vector (- (sdl:mouse-x) (elt *cursor-offset* 0))
-								 (- (sdl:mouse-y) (elt *cursor-offset* 1)))))
-			 ;; Update display
-			 (sdl:update-display)))
-		(sdl-ttf:quit-ttf)
-		(sdl-mixer:halt-music)
-		(sdl-mixer:close-audio t)
-		(sdl:free sdl:*default-font*)
-		,end-form))))
+				  ;; Draws custom cursor
+				  (when *cursor*
+				    (sdl:draw-surface-at *cursor* (vector (- (sdl:mouse-x) (elt *cursor-offset* 0))
+									  (- (sdl:mouse-y) (elt *cursor-offset* 1)))))
+				  ;; Update display
+				  (sdl:update-display)))
+			 (sdl-ttf:quit-ttf)
+			 (sdl-mixer:halt-music)
+			 (sdl-mixer:close-audio t)
+			 (sdl:free sdl:*default-font*)
+			 ,end-form)))))
 
 
 
@@ -390,6 +312,9 @@ Not used because we don't use the old apply version of run-form
 	      (eval x))
 	  form-list))
 
+(defun sort-key (args)
+  (destructuring-bind ((tag &rest attributes) &body body) args
+    (values tag attributes body)))
 
 ;; Make other keywords
 ;; ALternativly, (&key ) for keywords
@@ -414,8 +339,10 @@ Not used because we don't use the old apply version of run-form
 	   (sdl:initialise-default-font ,font))
 	 (sdl:window *width* *height* :title-caption "new-main-test")
 
-	 (run-forms ,init-form)
+	 (run-form ,init-form)
 
+	 (format t "~a" (sort-key ',args))
+	 (break)
 	 
 	 (setf (sdl:frame-rate) ,tmp-fps)
 	 

@@ -2,6 +2,35 @@
 
 (in-package #:sdl-helper-functions)
 
+(defparameter *colors* `((white ,(sdl:color :r 255 :g 255 :b 255))
+			 (black ,(sdl:color :r 0 :g 0 :b 0))
+			 (darkgray ,(sdl:color :r 50 :g 50 :b 50))
+			 (gray ,(sdl:color :r 160 :g 160 :b  160))
+			 (lightgray ,(sdl:color :r 211 :g 211 :b 211))
+			 (green ,(sdl:color :r 0 :g 255 :b 0))
+			 (red ,(sdl:color :r 255 :g 0 :b 0))
+			 (blue ,(sdl:color :r 0 :g 0 :b 255))
+			 (cyan ,(sdl:color :r 0 :g 255 :b 255))
+			 (yellow ,(sdl:color :r 255 :g 255 :b 0))))
+
+;; Colors
+(defmacro add-color (color &key (r 0) (g 0) (b 0))
+  "Add a color to the *colors* list"
+  `(push (list ',color (sdl:color :r ,r :g ,g :b ,b)) ,*colors*))
+
+(defun find-color (color)
+  "helper function for get-color"
+  (cadr (assoc color *colors* :test #'string=)))
+
+(defmacro get-color (color)
+  "Returns a chosen color from the list of SDL colors found in *colors*"
+  `(find-color ',color))
+
+(defun get-rgb (&key (r 0) (g 0) (b 0))
+  "Get an SDL color object from passed R,G,B"
+  (sdl:color :r r :g g :b b))
+
+
 ;; Shapes
 (defclass pos ()
   ((x :initarg :x :accessor x)
@@ -16,18 +45,6 @@
   ((w :initarg :w :accessor w)
    (h :initarg :h :accessor h))
   (:documentation "A rectangle"))
-
-#||
-(defclass circle ()
-  ((position :initarg :position :accessor get-position :documentation "The cirlce's cordinate position as a vector")
-   (radius :initarg :radius :accessor get-circle-radius :documentation "The circle's radius"))
-  (:documentation "A cirlce"))
-
-(defclass rect ()
-  ((position :initarg :position :accessor get-position :documentation "The rectangle's cordinate position as a vector")
-   (size :initarg :size :accessor get-rect-size :documentation "The rectangle's size as vector(width, height)"))
-  (:documentation "A rectangle"))
-||#
 
 (defclass hitbox ()
   ((name :initarg :name :accessor get-hitbox-name :documentation "The hitbox name \ identifier")
@@ -46,9 +63,11 @@
   ()
   (:documentation "A circle hitbox. Used for collision detection"))
 
+
+;; Change to use a generic package instead
 (defun clone-sprite (object &aux (copy (allocate-instance (class-of object))) 
                                  (slot-definition-name #+:ccl #'ccl:slot-definition-name
-													   #+:sbcl #'sb-mop:slot-definition-name)
+						       #+:sbcl #'sb-mop:slot-definition-name)
 								 (class-slots #+:ccl #'ccl:class-slots
 								              #+sbcl #'sb-mop:class-slots))
   "Clones an object."
@@ -74,6 +93,7 @@
   copy)
 
 
+
 (defun set-x (object amount)
   "Set the x-position of the object(Rect\Circle class)"
   (setf (x object) amount))
@@ -90,60 +110,4 @@
   "increase the y-position of the object(Rect\Circle class)"
   (incf (y object) amount))
 
-;; getters
-;(defun x (object)
-;  (format t "yo!"))
 
-#||
-;; setters
-(defun set-x (object amount)
-  "Set the x-position of the object(Rect\Circle class)"
-  (setf (elt (get-position object) 0) amount))
-
-(defun set-y (object amount)
-  "Set the y-position of the object(Rect\Circle class)"
-  (setf (elt (get-position object) 1) amount))
-
-(defun incf-x (object amount)
-  "increase the x-position of the object(Rect\Circle class)"
-  (incf (elt (get-position object) 0) amount))
-
-(defun incf-y (object amount)
-  "increase the y-position of the object(Rect\Circle class)"
-  (incf (elt (get-position object) 1) amount))
-||#
-
-
-#||
-(defun get-object-size-or-position (type object &aux (vect object))
-  "Get the value out of a vector's position"
-  ;; Changes vect into relevant vector
-  (cond ((and (or (string= type 'w) (string= type 'h)) (typep object 'rect))
-	 (setf vect (get-rect-size object))) ; Gets rectangle size if object is a rectangle, and we want W\H
-	((or (typep object 'rect) (typep object 'circle))
-	 (setf vect (get-position object)))) ; Gets position vector if object is either circle or rectangle
-
-  ;; Gets the value from correct vector position based on what we want
-  (cond ((or (string= type 'x) (string= type 'w))
-	 (elt vect 0))
-	((or (string= type 'y) (string= type 'h))
-	 (elt vect 1))))
-  
-;; getters
-(defun x (object)
-  (get-object-size-or-position 'x object))
-
-(defun y (object)
-  (get-object-size-or-position 'y object))
-
-(defun w (object)
-  (get-object-size-or-position 'w object))
-
-(defun h (object)
-  (get-object-size-or-position 'h object))
-
-
-(defun r (circle)
-  "Get the radius of the circle class object"
-  (get-circle-radius circle))
-||#
