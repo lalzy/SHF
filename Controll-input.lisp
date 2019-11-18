@@ -11,11 +11,16 @@
 (defparameter *Current-mouse-button* nil)
 (defparameter *mouse-state* 0)
 
-
+;Rename to key a
 (defun is-keys (&rest keys)
-  "Takes a list of keys and check if it's been pressed(through shf's global variable)"
+  "Take a list of keys and return true if any one of them has been pressed"
   (when keys
     (find-if #'(lambda (key) (member key *key-pressed-state*)) keys)))
+
+(defun is-all-keys (&rest keys)
+  "Takes a list of keys and check if all are pressed"
+  (when keys
+    (notany #'null (mapcar #'(lambda (key) (member key *key-pressed-state*)) keys))))
 
 (defun get-pressed-key (&aux (key *key-pressed-code*))
   "Get the current pressed key as character"

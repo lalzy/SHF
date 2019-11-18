@@ -21,6 +21,7 @@
 
    ;; Keyboard
    #:is-keys
+   #:is-all-keys
    #:check-key
    #:get-pressed-key
 

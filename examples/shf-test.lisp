@@ -72,6 +72,7 @@
 	(scroll-bar nil)
 	(scroll-bar2 nil)
 	(lines nil)
+	(input nil)
 	(height nil))
     
     (setf shf:*debug* t)
@@ -119,12 +120,18 @@
       :main-form
       (progn
 	(shf:draw-text (format nil "~a , ~a" (sdl:mouse-x) (sdl:mouse-y)) #(0 0))
+	(shf:draw-text (format nil "text-field is ~:[not active~;active~]" (shf:is-active? text-field)) #(0 20))
 
 	(shf:draw-scroll-bar scroll-bar)
 	(shf:draw-scroll-bar scroll-bar2)
 
-	(when (shf:is-keys :sdl-key-return)
+	(shf:draw-text (format nil "input: ~:[{}~; {~a}~]" input  input) #(250 0))
+	
+	(when (shf:is-all-keys :sdl-key-return ;:sdl-key-lctrl
+			       )
+	  (setf input (first (shf:get-text text-field)))
 	  (setf (shf:is-active? text-field) nil))
+	
 	
 	;(setf (shf:is-active? text-field) (shf:mouse-collision-check text-field))
 	;(setf (shf:is-active? text-field) )

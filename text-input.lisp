@@ -37,6 +37,8 @@
 (defun input-text-to-field (textfield &key multi-lines (list-of-mod-keys
 					 		`(:SDL-KEY-LSHIFT
 							  :SDL-KEY-RSHIFT
+							  :sdl-key-rctrl
+							  :sdl-key-lctrl
 							  ;; adds enter\return key to special mod key
 							  ,(unless multi-lines :sdl-key-return))))
   "Adds text to the textfield"
