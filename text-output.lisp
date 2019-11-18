@@ -162,8 +162,7 @@
 			    (text-y 0)
 			    (active nil)
 			    (hitbox-color background)
-			    (alpha 255)
-			    (line-amount 0))
+			    (alpha 255))
   "Rewrite to create a text-field based on height\width parameters, and optional background, 
 also create collision detection for mouse
 
@@ -174,7 +173,7 @@ Get the x,y,width,height, create a surface with width\height and draw it"
       (sdl:draw-box-* 0 0 w h :surface surface
 		      :color background))
     (make-instance 'text-field :surface surface :x x :y y :w w :h h :state state
-		   :background background :line-amount line-amount :font font :alpha alpha :active active
+		   :background background  :font font :alpha alpha :active active
 		   :text text :text-x text-x :text-y text-y
 
 		   ;; Unsure about hitbox for text-field, might not have one

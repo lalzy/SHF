@@ -99,7 +99,6 @@
    #:get-scroll-box-hitbox
    #:get-scroll-box
    #:show-scroll-bar?
-
    #:scrolling
    #:get-scrollbox-hitbox ; Might change to get-hitboxes(which sprite will use)
 

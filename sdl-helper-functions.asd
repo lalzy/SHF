@@ -32,7 +32,7 @@
 	       ;; Sound
 	       (:file "sound-system")
 
-	       ;; Text
+	       ;; Input and text
 	       (:file "text-output") ; Fonts, Text
 	       (:file "scrollbars")
 	       (:file "controll-input") ;K&M primarily

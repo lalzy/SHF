@@ -108,6 +108,9 @@
 	 ;))
      (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
 
+     :mouse-button-up-form (progn
+		      (when (shf:mouse-collision-check text-field)
+			(setf (shf:is-active? text-field) t)))
      :key-down-form
      (progn
        (shf:input-text-to-field text-field))
@@ -120,7 +123,10 @@
 	(shf:draw-scroll-bar scroll-bar)
 	(shf:draw-scroll-bar scroll-bar2)
 
-	(setf (shf:is-active? text-field) (shf:mouse-collision-check text-field))
+	(when (shf:is-keys :sdl-key-return)
+	  (setf (shf:is-active? text-field) nil))
+	
+	;(setf (shf:is-active? text-field) (shf:mouse-collision-check text-field))
 	;(setf (shf:is-active? text-field) )
 #||
 	(if (shf:mouse-collision text-field)

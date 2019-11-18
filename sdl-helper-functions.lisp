@@ -203,7 +203,7 @@
 				  
 				  ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
 				  (when ,draw-sprites
-				    (draw-sprites) 
+				    (draw-sprites)
 				    (draw-hitboxes))
 
 

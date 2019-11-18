@@ -14,7 +14,8 @@
 
 (defun is-keys (&rest keys)
   "Takes a list of keys and check if it's been pressed(through shf's global variable)"
-  (find-if #'(lambda (key) (member key *key-pressed-state*)) keys))
+  (when keys
+    (find-if #'(lambda (key) (member key *key-pressed-state*)) keys)))
 
 (defun get-pressed-key (&aux (key *key-pressed-code*))
   "Get the current pressed key as character"

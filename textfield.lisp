@@ -23,12 +23,16 @@
 	 :Documentation "Font used by the textfield")
    (background :accessor text-field-background
 	       :initarg :background)
+   #||
    (amount-of-lines :accessor get-line-amount
 		    :Documentation "The amount of lines the text-field hold"
-		    :initarg :line-amount)
+		    u		    :initarg :line-amount)
+   ||#
    (hitbox :accessor get-hitbox
 	   :initarg :hitbox)))
 
+(defun get-line2-amount (textfield)
+  (length (get-text textfield)))
 
 (defmethod change-surface ((object text-field) &key alpha)
   (let* ((old-surface (get-surface object))
@@ -77,7 +81,7 @@
 
 (defun hidden-vertical-lines (text-field)
   "Lines that we can't see in the text-field"
-  (- (get-line-amount text-field) (text-field-shown-lines text-field)))
+  (- (get-line2-amount text-field) (text-field-shown-lines text-field)))
 
 (defun max-vertical-scroll-distance (text-field)
   "The maximum amount that can be  scrolled vertically"
