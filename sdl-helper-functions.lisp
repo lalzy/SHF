@@ -361,7 +361,25 @@ Not used because we don't use the old apply version of run-form
 		  ;; Update display
 		  (sdl:update-display)))))))
 
+#|| fixed keyword macro, translate to use new-main, 
 
+use ((&key width height ---) &body body), calling will then be
+(newmain (:width 300 :height 300) (:main -stuff-) (:init -otherstuff-) (:end -quit-))
+  
+(defmacro test (&rest rest)
+  (let ((main)
+	( idle))
+    (loop for item in rest do
+	 (case (first item)
+	   (:main (setf main (rest item)))
+	   (:idle (setf idle (rest item)))))
+    `(progn
+	 ;(format t "inmain")
+	 ,@main
+       
+       	 ,@idle
+       )))
+||#
 #||
 (WITH-EVENTS (TYPE)
  (:ACTIVE-EVENT (:GAIN GAIN :STATE STATE)
