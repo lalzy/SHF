@@ -4,33 +4,21 @@
 
 (in-package #:shf-test)
 
-(defun main4 ()
-  (setf shf:*debug* t)
-  (setf shf:*debug-hitbox-draw* t)
-  
-  (setf SHF:*font-path* "c:/te/")
-  (setf SHF:*fonts* '("Vera.ttf"))
-  (let ((x2 -50) (y2 -50))
-  (shf:main-loop
-   
-   :title "tester"
-   :width 800
-   :height 500
-   :fps 60
-   
-   :quit-form (progn 
-		(format t "quitting!~%"))
-   :init-form 
-   (progn
-     (format t "initializing!~%"))
-   
-   :mouse-button-down-form (progn (setf x2 (- (sdl:mouse-x) 3) y2 (- (sdl:mouse-y) 3)))
-   
-   :main-form
-   (progn
-     (sdl:draw-box-* x2 y2 5 5 :color (shf:get-color green))
-     (shf:draw-text "In main!"  #(0 0))
-     (shf:draw-text "Also in main12!"  #(0 20))))))
+(defun main5 ()
+  (let ((tx 0)
+	(ty 60))
+  (shf:new-main2 (:width 400 :title "some new title!")
+
+    (:init (format t "in init!~%"))
+
+    (:quit (format t "quittinfdfg!~%"))
+    (:main
+     (shf:draw-text
+      (format nil "~a" (round (sdl:average-fps)))
+      #(0 0))
+     (shf:draw-text "in main!" #(0 20))
+     (shf:draw-text "also in main!" #(0 40))
+     (shf:draw-text "variable-position-attempt!" (vector tx ty))))))
 
 
 (defun main3 ()
@@ -126,9 +114,11 @@
 	(shf:draw-scroll-bar scroll-bar2)
 
 	(shf:draw-text (format nil "input: ~:[{}~; {~a}~]" input  input) #(250 0))
+
+	(shf:draw-text (format nil "~a" (shf:get-pressed-key)) #(250 20))
 	
-	(when (shf:is-all-keys :sdl-key-return ;:sdl-key-lctrl
-			       )
+	(when (shf:is-all-keys :sdl-key-return :sdl-key-lctrl)
+			       
 	  (setf input (first (shf:get-text text-field)))
 	  (setf (shf:is-active? text-field) nil))
 	

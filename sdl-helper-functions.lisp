@@ -361,25 +361,37 @@ Not used because we don't use the old apply version of run-form
 		  ;; Update display
 		  (sdl:update-display)))))))
 
-#|| fixed keyword macro, translate to use new-main, 
-
-use ((&key width height ---) &body body), calling will then be
-(newmain (:width 300 :height 300) (:main -stuff-) (:init -otherstuff-) (:end -quit-))
-  
-(defmacro test (&rest rest)
-  (let ((main)
-	( idle))
-    (loop for item in rest do
+(defmacro new-main2 ((&key (width 150) (height 150) (title "test") (fps 30))
+		     &rest body)
+		     ;&aux (width 250) (height 250) (title "test") (fps 30))
+  (let (main-form init-form end-form (font (gensym)))
+    (loop for item in body do
 	 (case (first item)
-	   (:main (setf main (rest item)))
-	   (:idle (setf idle (rest item)))))
-    `(progn
-	 ;(format t "inmain")
-	 ,@main
+	   ((:main :idle) (setf main-form (rest item)))
+	   (:init (setf init-form (rest item)))
+	   ((:quit :end)  (setf end-form (rest item)))))
+    
+    `(sdl:with-init ()
+       (sdl:init-video)
+       (sdl:enable-unicode)
+       ;; Attempts to initialize the default font
+       (let ((,font (make-instance 'sdl:ttf-font-definition
+				   :size 15
+				   :filename  "c:/te/vera.ttf")))
+	 (sdl:initialise-default-font ,font))
+
+       (sdl:window ,width ,height :title-caption ,title)
+       (setf (sdl:frame-rate) ,fps)
+       ,@init-form
        
-       	 ,@idle
-       )))
-||#
+       (sdl:with-events ()
+	 (:quit-event () ,@end-form t)
+	 (:idle ()
+		  (sdl:clear-display (get-color black))
+		,@main-form
+		  (sdl:update-display)
+		)))))
+
 #||
 (WITH-EVENTS (TYPE)
  (:ACTIVE-EVENT (:GAIN GAIN :STATE STATE)

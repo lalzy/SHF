@@ -17,7 +17,8 @@
    #:main-loop
 
    #:new-main
-   
+   #:new-main2
+   #:test
 
    ;; Keyboard
    #:is-keys
