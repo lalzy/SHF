@@ -46,24 +46,6 @@
    (h :initarg :h :accessor h))
   (:documentation "A rectangle"))
 
-(defclass hitbox ()
-  ((name :initarg :name :accessor get-hitbox-name :documentation "The hitbox name \ identifier")
-   ;(rel-pos :initarg :rel-pos :accessor get-hitbox-rel-pos :documentation "Relative position to it's owner(such as a sprite)")
-   (rel-x :initarg :rel-x :accessor get-hitbox-rel-x :documentation "Relative position to it's owner(such as a sprite)")
-   (rel-y :initarg :rel-y :accessor get-hitbox-rel-y :documentation "Relative position to it's owner(such as a sprite)")
-   (color :initarg :color :accessor get-box-color :documentation "The color of the hitbox, used when\if drawing them"))
-  (:documentation "The hitbox super class. Hitboxes are used for the collision detection"))
-
-
-(defclass hitbox-rect (rect hitbox)
-  ()
-  (:documentation "A rectangle hitbox. Used for collision detection"))
-
-(defclass hitbox-circle (circle hitbox)
-  ()
-  (:documentation "A circle hitbox. Used for collision detection"))
-
-
 ;; Change to use a generic package instead
 (defun clone-sprite (object &aux (copy (allocate-instance (class-of object))) 
                                  (slot-definition-name #+:ccl #'ccl:slot-definition-name
@@ -111,3 +93,11 @@
   (incf (y object) amount))
 
 
+
+;; Surface
+(defgeneric change-surface (object &key alpha))
+
+(defmethod change-surface (object  &key alpha)
+  (let* ((old-surface (get-surface object))
+	 (surface (sdl:create-surface (sdl:width old-surface) (sdl:height old-surface))))
+    (setf (get-surface object) surface)))

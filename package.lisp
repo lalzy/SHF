@@ -20,6 +20,7 @@
    #:new-main2
    #:test
 
+
    ;; Keyboard
    #:is-keys
    #:is-all-keys
@@ -37,10 +38,13 @@
    
 
    ;; Menu \ States
-   :*state*
-   #:set-state
    #:check-state
    #:create-menu
+
+   #:set-state
+   #:add-states
+   
+
    
    ;; Colors
    :*colors*
@@ -153,6 +157,8 @@
    #:delete-from-sprite-group
    #:add-to-sprite-group
    #:Clone-sprite
+   #:create-sprite
+   #:generate-sheet-cells
 
    ;; Sprite class and it's Accessors
    #:sprite-class

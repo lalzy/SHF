@@ -49,7 +49,20 @@ sees it as numbers, but the unicode characters are not numbers."
 			      (return-from is-mod-key t))) list-of-mod-keys)
   nil)
 
-(defun input-text-to-field (textfield &key multi-lines (list-of-mod-keys
+
+(defun count-characters (text-list count-lines)
+  "Sums up all characters found in the text(list), optionally sums up each line as well"
+  (let ((sum (loop for text in text-list sum (length text))))
+       (if count-lines
+	   (+ (1- (length text-list)) sum)
+	   sum)))
+
+(defun check-max-text-length (max-length text-list count-lines)
+  "Check if text-list exceed maximum allowed characters"
+  (cond ((null max-length) t)
+	((and (numberp max-length) (< (count-characters text-list count-lines) max-length)))))
+
+(defun input-text-to-field (textfield &key (count-lines t) multi-lines max-length (list-of-mod-keys
 					 		`(:SDL-KEY-LSHIFT  :SDL-KEY-RSHIFT :sdl-key-rctrl :sdl-key-lsuper
 							  :sdl-key-rsuper :sdl-key-ralt :sdl-key-lalt :sdl-key-menu
 							  :sdl-key-tab :sdl-key-pageup  :sdl-key-pagedown  :sdl-key-insert
@@ -67,15 +80,14 @@ sees it as numbers, but the unicode characters are not numbers."
 							  ,(unless multi-lines :sdl-key-return))))
   "Adds text to the textfield"
   (when (is-active? textfield)
-    (let (sdl-key unicode-key)
-      (setf (values sdl-key unicode-key) (get-pressed-key))
-
+    (multiple-value-bind (sdl-key unicode-key)
+	(get-pressed-key)
       (unless (is-mod-key sdl-key list-of-mod-keys)
 	(let* ((text-list (get-text textfield))
 	       (text (first (last text-list))))
-
+	  (when (or (check-max-text-length max-length text-list count-lines) (string-equal sdl-key :sdl-key-backspace))
 	  (cond ((and multi-lines (string-equal sdl-key :sdl-key-return))
 		 (setf text-list (create-new-line text-list)))
 		((string-equal sdl-key :sdl-key-backspace)
 		 (remove-character-from-textfield textfield (1- (length text-list))))
-		(t (add-character-to-textfield textfield (1- (length text-list)) text (or (check-keypad-num sdl-key) unicode-key)))))))))
+		(t (add-character-to-textfield textfield (1- (length text-list)) text (or (check-keypad-num sdl-key) unicode-key))))))))))

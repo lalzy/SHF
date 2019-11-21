@@ -1,7 +1,7 @@
 (in-package #:sdl-helper-functions)
 
-(defparameter *font-path* "") ; Path to fonts
-(defparameter *fonts* '("vera.tff")) ; list of font names
+(defparameter *font-path* "")
+(defparameter *fonts* '("vera.ttf")) ; list of font names
 (defparameter *font-size* 15) ; Default font size
 
 

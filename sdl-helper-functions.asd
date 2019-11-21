@@ -23,7 +23,10 @@
 	       ;; Core building blocks
 	       (:file "Shape-classes")
 
+	       (:file "hitboxes")
+	       
 	       ;; Image\Sprites
+	       (:file "images")
 	       (:file "sprites")
 
 	       ;; Collision\Physics

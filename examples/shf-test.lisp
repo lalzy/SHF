@@ -4,53 +4,47 @@
 
 (in-package #:shf-test)
 
+(defun main10 ()
+  "random test")
+
 (defun main5 ()
-  (let ((tx 0)
-	(ty 60))
-  (shf:new-main2 (:width 400 :title "some new title!")
+  "animation testing")
 
-    (:init (format t "in init!~%"))
-
-    (:quit (format t "quittinfdfg!~%"))
-    (:main
-     (shf:draw-text
-      (format nil "~a" (round (sdl:average-fps)))
-      #(0 0))
-     (shf:draw-text "in main!" #(0 20))
-     (shf:draw-text "also in main!" #(0 40))
-     (shf:draw-text "variable-position-attempt!" (vector tx ty))))))
-
+(defun main4 ()
+  "Image testing"
+  (let (img img2 guy)
+    (shf:main-loop
+     (:width 500 :height 500 :title "image testing" :font-path "C:/quicklisp/local-projects/sdl-helper-functions/assets/")
+     (:init (setf img (shf:make-image "test.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
+	    (setf img2 (shf:make-image "test2.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
+	    (setf guy (shf:create-sprite "sprite.png" :path #p"c:/te/" :x 0 :y 0 :cells (shf:generate-sheet-cells 32 32))))
+     (:main (sdl:draw-surface-at-* img 150 0)
+	    (sdl:draw-surface-at-* img2 150 260)
+	    ;(format t "~a" (shf:get-sprite guy))
+	    ;(break)
+	    (sdl:draw-surface-at-* (shf:get-sprite guy) 0 0)))))
 
 (defun main3 ()
-  (let ((x2 -50) (y2 -50))
-    (shf:new-main
-     (format t "void!")
-     :init (format t "initializing!~%")
- 
-     :title "hgjhg"
-     :width 900
-     :height 500
-     :fps 90
-     
-     :key-down-event (format t "pressed!~%")
-     :key-up-event (format t "released!~%")
-     :mouse-down-event (setf x2 (- (sdl:mouse-x) 3) y2 (- (sdl:mouse-y) 3))
-     
-     :main
-     
-     
-     (sdl:draw-box-* x2 y2 5 5 :color (shf:get-color green))
-     
-     (shf:draw-text "In main!"  #(0 20))
-     (shf:draw-text "Also in main!"  #(0 40))
-     (shf:draw-text
-      (format nil "~a" (round (sdl:average-fps)))
-      #(0 0))
-    
-     :end (format t "quitting!~%"))))
+  "state testing"
+  (shf:main-loop
+   (:width 400 :height 100 :title "some new title!" :font-path "c:/te/")
+   (:quit )
+   
+   (:init)
+
+   (:key-down
+
+    (shf:check-state :game (when (shf:is-keys :sdl-key-q) (sdl:push-quit-event)))
+    (shf:check-state :menu (shf:set-state :game)))
+   
+   (:main
+    (shf:check-state :menu (shf:draw-text "hello from main! Press anykey!" #(0 0)))
+    (shf:check-state :game (shf:draw-text "hello from game! Q to quit!" #(0 0))))))
+
 
 
 (defun main2 ()
+  "Textfield testing"
   (let ((scroll-points 0)
 	(mouse-clicked nil)
 	(scroll-stop nil)
@@ -65,48 +59,33 @@
     
     (setf shf:*debug* t)
     (setf shf:*debug-hitbox-draw* t)
-    
-    (setf SHF:*font-path* "c:/te/")
     (setf SHF:*fonts* '("Vera.ttf"))
     
-    (shf:main-loop
-     :title "tester"
+    (shf:main-loop ;(shf:main-loop
+     (:title "tester"
      :width 800
      :height 500
-     :fps 60
-     :draw-sprites t
-     ;:capture-mouse t
-     ;:fullscreen t
-     ;:borderless t
+     :font-path "c:/te/"
+     :fps 60)
      ;; Appends the init-form:
-     :quit-form (progn 
-		  (shf:empty-sprite-group))
-     :init-form 
-     (progn
-       
-       (let ((tf-w 150)
-	     (tf-h 150)
-	     (tf-x 200)
-	     (tf-y 50)
-	     (font (shf:get-font :size 15)))
-	 (setf (values string lines height) (shf:line-wrapping string tf-w :font font))
-	 (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font)) ;:text string :line-amount lines))
-	 (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 31 :direction 'y :sb-hitbox-color (shf:get-color red) ))
+     (:quit(shf:empty-sprite-group))
+     (:init (let ((tf-w 150)
+		  (tf-h 150)
+		  (tf-x 200)
+		  (tf-y 50)
+		  (font (shf:get-font :size 15)))
+	      (setf (values string lines height) (shf:line-wrapping string tf-w :font font))
+	      (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font)) ;:text string :line-amount lines))
+	      (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 31 :direction 'y :sb-hitbox-color (shf:get-color red) ))
+	      (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
 
-	 
-	 ;))
-     (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
-
-     :mouse-button-up-form (progn
-		      (when (shf:mouse-collision-check text-field)
-			(setf (shf:is-active? text-field) t)))
-     :key-down-form
-     (progn
-       (shf:input-text-to-field text-field))
+     (:mouse-up (when (shf:mouse-collision-check text-field)
+		  (setf (shf:is-active? text-field) t)))
+     (:key-down
+       (shf:input-text-to-field text-field :multi-lines t :count-lines nil :max-length 5))
      
       ;; Appends the main form \ gameplay-loop
-      :main-form
-      (progn
+      (:main
 	(shf:draw-text (format nil "~a , ~a" (sdl:mouse-x) (sdl:mouse-y)) #(0 0))
 	(shf:draw-text (format nil "text-field is ~:[not active~;active~]" (shf:is-active? text-field)) #(0 20))
 
@@ -172,6 +151,7 @@
        (format t "Error!"))))
 
 (defun main ()
+  "collision and sprite class testing"
   (let ((box nil)
 	(box2 nil)
 	(h1 nil)
@@ -180,110 +160,92 @@
     (setf shf:*debug* t)
     (setf shf:*debug-hitbox-draw* t)
     
-    (setf SHF:*font-path* "c:/te/")
-    (setf SHF:*fonts* '("Vera.ttf"))
-    
     (shf:main-loop
-     :title "tester"
-     :width 800
-     :height 500
-     :fps 15
-     :draw-sprites nil
-     ;:capture-mouse t
-     ;:fullscreen t
-     ;:borderless t
+     (:title "tester"
+	     :width 800
+	     :height 500
+	     :fps 15
+	     :font-path "c:/te/"
+	     :draw-sprites nil)
      ;; Appends the init-form:
-     :init-form 
-      (progn
+     (:init 
       ; (shf:set-state "test")
-       (shf:make-sprite-sheet "c:/te/images/sprites.png" '((0 0 32 32) (0 32 32 32) (500 500 32 32)) :color-key-pos #(0 0))
-       
-       (setf colide-once nil)
-       
-       ;(shf:init-sounds "c:/te/" :file-names '("hit.wav" "menu-move.wav"));'("hit.wav" "menu-move.wav"))
-       ;(shf:init-sounds "c:/te/")
-       ;(shf:init-sounds "c:/te/" :file-names '("hit" "menu-move"))
-       (shf:init-sounds "c:/te/" :file-names '("menu-move"))
-       (shf:init-sounds "c:/te/" :file-names '("hit"))
-       
-       ;(shf:init-music '("alone.mp3" "Brainless.mp3" "aevum.mp3" "alt.mp3"))
-       ;(shf:init-music "c:/te/" :file-names '("track1" "track2" "track3" ))
-       (shf:init-music "c:/te/" :file-names '("track1" ))
-       (shf:init-music "c:/te/" :file-names '( "track2"))
-       ;(shf:init-music "c:/te/" :file-names '( "track3" ))
-       ;(shf:init-music "C:/te/")
-       ;(shf:init-music "C:/te/" :extention ".mp3")
-       
-  
-       (shf:empty-sprite-group)
-       (setf box (shf:make-box-sprite 50 50 (shf:get-color darkgray) :x 140 :y 200))
-       ;(setf box (shf:make-circle-sprite 50 (shf:get-color darkgrey) :x 140 :y 200))
-       (setf box2 (shf:make-box-sprite 50 50 (shf:get-color darkgray) :x 230 :y 230))
-       ;(setf box (shf:make-circle-sprite 50 (shf:get-color :green) :x 230 :y 230))
+      (shf:make-sprite-sheet "c:/te/images/sprites.png" '((0 0 32 32) (0 32 32 32) (500 500 32 32)) :color-key-pos #(0 0))
+      
+      (setf colide-once nil)
+      
+					;(shf:init-sounds "c:/te/" :file-names '("hit.wav" "menu-move.wav"));'("hit.wav" "menu-move.wav"))
+					;(shf:init-sounds "c:/te/")
+					;(shf:init-sounds "c:/te/" :file-names '("hit" "menu-move"))
+      (shf:init-sounds "c:/te/" :file-names '("menu-move"))
+      (shf:init-sounds "c:/te/" :file-names '("hit"))
+      
+					;(shf:init-music '("alone.mp3" "Brainless.mp3" "aevum.mp3" "alt.mp3"))
+					;(shf:init-music "c:/te/" :file-names '("track1" "track2" "track3" ))
+      (shf:init-music "c:/te/" :file-names '("track1" ))
+      (shf:init-music "c:/te/" :file-names '( "track2"))
+					;(shf:init-music "c:/te/" :file-names '( "track3" ))
+					;(shf:init-music "C:/te/")
+					;(shf:init-music "C:/te/" :extention ".mp3")
+      
+      
+      (shf:empty-sprite-group)
+      (setf box (shf:make-box-sprite 50 50 (shf:get-color darkgray) :x 140 :y 200))
+					;(setf box (shf:make-circle-sprite 50 (shf:get-color darkgrey) :x 140 :y 200))
+      (setf box2 (shf:make-box-sprite 50 50 (shf:get-color darkgray) :x 230 :y 230))
+					;(setf box (shf:make-circle-sprite 50 (shf:get-color :green) :x 230 :y 230))
 
       
-       
-       (shf:create-hitbox 'rect :sprite box :x 15 :y 25 :w 10 :h 10 :name "boxy" :color (shf:get-color red))
-       (shf:create-hitbox 'circle :sprite box :y 8 :r 5 :name "circly" :color (shf:get-color red))
-       (shf:create-hitbox 'rect :sprite box2 :x 15 :y 15 :w 5 :h 5 :name "boxer"  :color (shf:get-color red))
+      
+      (shf:create-hitbox 'rect :sprite box :x 15 :y 25 :w 10 :h 10 :name "boxy" :color (shf:get-color red))
+      (shf:create-hitbox 'circle :sprite box :y 8 :r 5 :name "circly" :color (shf:get-color red))
+      (shf:create-hitbox 'rect :sprite box2 :x 15 :y 15 :w 5 :h 5 :name "boxer"  :color (shf:get-color red))
 
       (setf h1 (shf:create-hitbox 'rect :w 200 :h 5 :x 50 :y 400 :name "h1 box" :color (shf:get-color blue)))
-       (setf h2 (shf:create-hitbox 'circle :r 50 :x 350 :y 400 :name "h1 circle" :color (shf:get-color blue)))
-      ; (shf:create-hitbox :circle :sprite box  :r 15 :color (shf:get-color :red))
-       ;(shf:create-hitbox :circle :sprite box2  :r 15 :color (shf:get-color :red))
-     ;  (shf:create-hitbox :rect :x 150 :y 0 :w 50 :h 50)
+      (setf h2 (shf:create-hitbox 'circle :r 50 :x 350 :y 400 :name "h1 circle" :color (shf:get-color blue)))
+					; (shf:create-hitbox :circle :sprite box  :r 15 :color (shf:get-color :red))
+					;(shf:create-hitbox :circle :sprite box2  :r 15 :color (shf:get-color :red))
+					;  (shf:create-hitbox :rect :x 150 :y 0 :w 50 :h 50)
 
- ;      (setf (shf:get-sprite-hitboxes box)
-;	     (list (shf:create-hitbox box :rect :x 10 :y 10 :w 30 :h 30 :color (shf:get-color :red))))
+					;      (setf (shf:get-sprite-hitboxes box)
+					;	     (list (shf:create-hitbox box :rect :x 10 :y 10 :w 30 :h 30 :color (shf:get-color :red))))
       )
       
       ;; Appends the main form \ gameplay-loop
-      :main-form
-      (progn
-
-	
-	(when (shf:is-keys :sdl-key-q)
-	  (sdl:push-quit-event))
-	
-       (shf:draw-sprites)
-       (shf:draw-hitboxes)
-       
-       (shf:draw-text (format nil "hello! - size = ~a" (sdl:get-font-size "hello!" :size :w)) #(0 0) )
-
-      (shf:draw-text (format nil "current song = ~a" (shf:get-current-song-name)) #(410 0))
-
-      (when (> delay 0)
-       (when (shf:is-keys :sdl-key-z)  (shf:play-sound :hit) )
-       (cond ((and (shf:is-keys :sdl-key-lshift) (shf:is-keys :sdl-key-1))
-	      (shf:set-state "test"))
-	     ((and (shf:is-keys :sdl-key-lshift) (shf:is-keys :sdl-key-2))
-	      (shf:set-state "tester")))
-       (when (shf:is-keys :sdl-key-x) (shf:play-sound :menu-move))
-       (when (shf:is-keys :sdl-key-c) (shf:random-music) (shf:play-current-song))
-       (when (shf:is-keys :sdl-key-v) (shf:stop-music))
-       (when (shf:check-key #\+);(shf:is-keys :sdl-key-kp-plus)
-	 (shf:set-volume 1) (shf:set-music-volume 1))
-       (when (shf:check-key #\-);(shf:is-keys :sdl-key-kp-minus)
-	 (shf:set-volume -1) (shf:set-music-volume -1))
-       (when (shf:is-keys :sdl-key-g) (shf:play-song :track3))
-       )
-      (when (shf:is-keys :sdl-key-j)  (shf:delete-from-sprite-group box))
-      (when (shf:is-keys :sdl-key-k) (shf:add-to-sprite-group box))
-       (shf:music-stopped-form
-	;(shf:rotate-playlist)
-	;(shf:play-current-song)
-
-	)
-
-       (if (shf:is-keys :sdl-key-x :sdl-key-c :sdl-key-v :sdl-key-z :sdl-key-+ :sdl-key--)
-	   (decf delay)
-	   (setf delay 1))
-      
-       ;; If Q or escape is pressed, goes to quit-event
-       (when (or (shf:is-keys :sdl-key-q) (shf:is-keys :sdl-key-escape))
-	 (setf shf:*key-pressed-state* nil)
-	 (sdl:push-quit-event))
-       (when (shf:is-keys :sdl-key-s))
+      (:main (when (shf:is-keys :sdl-key-q)
+	       (sdl:push-quit-event))
+	     (shf:draw-sprites)
+	     (shf:draw-hitboxes)
+	     (shf:draw-text (format nil "hello! - size = ~a" (sdl:get-font-size "hello!" :size :w)) #(0 0) )
+	     (shf:draw-text (format nil "current song = ~a" (shf:get-current-song-name)) #(410 0))
+	     (when (> delay 0)
+	       (when (shf:is-keys :sdl-key-z)  (shf:play-sound :hit) )
+	       (cond ((and (shf:is-keys :sdl-key-lshift) (shf:is-keys :sdl-key-1))
+		      (shf:set-state "test"))
+		     ((and (shf:is-keys :sdl-key-lshift) (shf:is-keys :sdl-key-2))
+		      (shf:set-state "tester")))
+	       (when (shf:is-keys :sdl-key-x) (shf:play-sound :menu-move))
+	       (when (shf:is-keys :sdl-key-c) (shf:random-music) (shf:play-current-song))
+	       (when (shf:is-keys :sdl-key-v) (shf:stop-music))
+	       (when (shf:check-key #\+);(shf:is-keys :sdl-key-kp-plus)
+		 (shf:set-volume 1) (shf:set-music-volume 1))
+	       (when (shf:check-key #\-);(shf:is-keys :sdl-key-kp-minus)
+		 (shf:set-volume -1) (shf:set-music-volume -1))
+	       (when (shf:is-keys :sdl-key-g) (shf:play-song :track3))
+	       )
+	     (when (shf:is-keys :sdl-key-j)  (shf:delete-from-sprite-group box))
+	     (when (shf:is-keys :sdl-key-k) (shf:add-to-sprite-group box))
+	     (shf:music-stopped-form	;(shf:rotate-playlist)
+					;(shf:play-current-song)
+	      )
+	     (if (shf:is-keys :sdl-key-x :sdl-key-c :sdl-key-v :sdl-key-z :sdl-key-+ :sdl-key--)
+		 (decf delay)
+		 (setf delay 1))
+	     ;; If Q or escape is pressed, goes to quit-event
+	     (when (or (shf:is-keys :sdl-key-q) (shf:is-keys :sdl-key-escape))
+	       (setf shf:*key-pressed-state* nil)
+	       (sdl:push-quit-event))
+	     (when (shf:is-keys :sdl-key-s))
 
 
 	(when (shf:edge-collision-check (first (shf:get-sprite-hitboxes box)) nil)
@@ -408,22 +370,10 @@
 	  (shf:draw-text (format nil "text-collision! - name [~a]" collision) #(0 340)
 			 :font (shf:get-font :size 18) :color (shf:get-color cyan))))
 
-
-      
       (if (shf:check-key #\s)
 	  (shf:draw-text (format nil "s code!") #(400 0))
 	  (shf:draw-text (format nil "unicode=~a" (SHF:get-pressed-key)) #(400 0)))
 
-
-
-
-
-
-
-
-
-
-      
 ;	(shf:create-cursor "c:/te/cursor.bmp")
       ))))
 
