@@ -303,7 +303,6 @@ If beyond is set, will only be considered collision if object is past window"
      (push 'bottom col))
    col)
 
-
 (defun edge-circle-collision (circle beyond &aux (ex 0) (ey 0) (ew *width*) (eh *height*) (col nil))
   "Checks if circle collides with the edge of the window"
   (if beyond

@@ -100,12 +100,12 @@ which is a list of all sprites that should be automatically drawn"
 
 (defun move-sprite (sprite dir &optional (amount 0))
   "Moves a sprite and all it's hitboxes by x-amount in decided direction(:horizontal or :vertical)"
-  (when (equalp dir :vertical)
+  (when (string= dir :horizontal)
     (dolist (hitbox (get-sprite-hitboxes sprite))
       (incf-x  hitbox amount))
     (incf-x  sprite amount))
   
-  (when (equalp dir :horizontal)
+  (when (string= dir :vertical)
       (dolist (hitbox (get-sprite-hitboxes sprite))
 	(incf-y  hitbox amount))
       (incf-y sprite amount)))

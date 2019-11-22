@@ -121,13 +121,14 @@
 			   debug-mode capture-mouse (draw-sprites t) default-font font-path)
 		     &rest body)
   
-  (let (pre-window-form post-window-form main-form end-form key-down-form key-up-form
+  (let (pre-window-form post-window-form main-form after-draw-main-form end-form key-down-form key-up-form
 			mouse-down-form mouse-up-form window-focus-form mouse-move-form close-form)
     (loop for item in body do
 	 (case (first item)
 	   ((:pre-window-init :pre-init) (setf pre-window-form (rest item)))
 	   ((:post-window-init :post-init :init) (setf post-window-form (rest item)))
 	   ((:main :idle) (setf main-form (rest item)))
+	   ((:post-draw :post-draw-main :late-main) (setf after-draw-main-form (rest item)))
 	   ((:close :finish :protect) (setf close-form (rest item))) 
 	   ((:key-down :key-down-event) (setf key-down-form (rest item)))
 	   ((:key-up :key-up-event) (setf key-up-form (rest item)))
@@ -189,7 +190,7 @@
 			   ,@main-form
 			   
 			   ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
-			   (when ,draw-sprites
+			   (when (and ,draw-sprites (not (check-state :menu)))
 			     (draw-sprites)
 			     (draw-hitboxes))
 
@@ -206,6 +207,9 @@
 			   
 			   (setf *mouse-move-direction* #(none none))
 
+
+			   ,@after-draw-main-form
+			   
 			   ;; Draws custom cursor
 			   (when *cursor*
 			     (sdl:draw-surface-at *cursor* (vector (- (sdl:mouse-x) (elt *cursor-offset* 0))

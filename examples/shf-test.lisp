@@ -26,21 +26,42 @@
 
 (defun main3 ()
   "state testing"
-  (shf:main-loop
-   (:width 400 :height 100 :title "some new title!" :font-path "c:/te/")
-   (:quit )
-   
-   (:init)
+  (let (box (box-dir #(:right :down)))
+    (shf:main-loop
+     (:width 400 :height 200 :title "some new title!" :font-path "c:/te/")
+     (:quit )
+     
+     (:init (shf:add-state :pause)
+	    (setf box (shf:make-box-sprite 15 15 (shf:get-color green))))
 
-   (:key-down
+     (:key-down
+      (when (shf:is-keys :sdl-key-p :sdl-key-pause)
+	(cond 
+	  ((shf:check-state :pause) 
+	   (shf:set-state :game))
+	  ((shf:check-state :game)
+	   (shf:set-state :pause))))
+      
+      (shf:with-state :game (when (shf:is-keys :sdl-key-q) (sdl:push-quit-event)))
+      (shf:with-state :menu (shf:set-state :game)))
+     
+     (:main
+      (shf:with-state :menu (shf:draw-text "hello from main! Press anykey!" #(0 0)))
+      
+      (shf:with-state :game
+	;; collision
+	(cond ((shf:get-edge-dir box 'right) (setf (elt box-dir 0) :left))
+	      ((shf:get-edge-dir box 'left) (setf (elt box-dir 0) :right))
+	      ((shf:get-edge-dir box 'bottom) (setf (elt box-dir 1) :up))
+	      ((shf:get-edge-dir box 'top) (setf (elt box-dir 1) :down)))
+	
+	;; movement
+	(shf:move-sprite box :horizontal (if (string= (elt box-dir 0) :right) 5 -5))
+	(shf:move-sprite box :vertical (if (string= (elt box-dir 1) :down) 5 -5))))
 
-    (shf:check-state :game (when (shf:is-keys :sdl-key-q) (sdl:push-quit-event)))
-    (shf:check-state :menu (shf:set-state :game)))
-   
-   (:main
-    (shf:check-state :menu (shf:draw-text "hello from main! Press anykey!" #(0 0)))
-    (shf:check-state :game (shf:draw-text "hello from game! Q to quit!" #(0 0))))))
-
+     (:post-draw
+      (shf:with-state :pause
+	(shf:draw-text "Game paused!" #(150 75) :color (shf:get-color red)))))))
 
 
 (defun main2 ()

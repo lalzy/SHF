@@ -9,11 +9,14 @@
   (if (member state *states*)
       (setf *state* state)))
 
-(defmacro check-state (state &body body)
+(defun check-state (state)
+  (string= state *state*))
+
+(defmacro with-state (state &body body)
   `(when (string= ,state *state*)
      ,@body))
 
-(defun add-states (states)
+(defun add-state (&rest states)
   "Add all the states to *States* variable"
   (dolist (state states)
     (push state *states*)))

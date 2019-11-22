@@ -42,8 +42,8 @@
    #:create-menu
 
    #:set-state
-   #:add-states
-   
+   #:add-state
+   #:with-state
 
    
    ;; Colors
