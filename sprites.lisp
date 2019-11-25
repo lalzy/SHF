@@ -30,7 +30,7 @@ Animations are a sequence of sprite sheet surfaces created through make-sprite-s
 
 (defun create-sprite (image-name &key cells (x 0) (y 0) (path #p"") color-key-pos)
   "Creates a sprite from image(set)"
-  (let* ((image (split-image (make-image image-name :path path :color-key-pos color-key-pos) cells color-key-pos))
+  (let* ((image (split-image (make-image image-name :path (merge-pathnames path image-name) :color-key-pos color-key-pos) cells color-key-pos))
 	 (sprite (make-instance 'sprite-class :sprite (elt image 0)
 				:x x :y y :w (sdl:width (elt image 0))  :h (sdl:height (elt image 0)))))
     (push sprite *sprite-group*)
@@ -115,14 +115,12 @@ which is a list of all sprites that should be automatically drawn"
   (when x
     (set-x sprite x)
     (dolist (hitbox (get-sprite-hitboxes sprite))
-      ;(set-x hitbox (+ x (elt (get-hitbox-rel-pos hitbox) 0)))))
 
       (set-x hitbox (+ x (get-hitbox-rel-x hitbox)))))
   
   (when y
     (set-y sprite y)
     (dolist (hitbox (get-sprite-hitboxes sprite))
-     ; (set-y hitbox (+ y (elt (get-hitbox-rel-pos hitbox) 1))))))
       (set-y hitbox (+ y (get-hitbox-rel-y hitbox))))))
 
 

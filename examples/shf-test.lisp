@@ -5,35 +5,69 @@
 (in-package #:shf-test)
 
 (defun main10 ()
-  "random test")
+  "random test"
+  (let ()
+    (shf:main-loop
+     (:font-path "c:/te/" :assets-path "c:/te" :width 500 :height 500)
+     (:main nil))))
+
+(defun main6 ()
+  "cursor test"
+  (let ()
+    (shf:main-loop
+     (:font-path "c:/te/" :width 500 :height 500
+		 :cursor "c:/te/cursor.png" :cursor-offset #(13 13))
+     
+    ;(:init (shf:create-cursor "C:/te/cursor.png" :offset #(13 13)))
+     (:main (shf:draw-text "yo" #(0 0))))))
 
 (defun main5 ()
-  "animation testing")
+  "animation testing"
+  (let ()
+    (shf:main-loop
+     (:width 150 :height 150 :font-path "c:/te/")
+     (:main (shf:draw-text "heyo" #(0 0))))))
 
 (defun main4 ()
   "Image testing"
-  (let (img img2 guy)
+  (let (img img2 guy r g b points)
     (shf:main-loop
      (:width 500 :height 500 :title "image testing" :font-path "C:/quicklisp/local-projects/sdl-helper-functions/assets/")
-     (:init (setf img (shf:make-image "test.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
+     (:init 
+      (setf img (shf:make-image "test.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
 	    (setf img2 (shf:make-image "test2.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
 	    (setf guy (shf:create-sprite "sprite.png" :path #p"c:/te/" :x 0 :y 0 :cells (shf:generate-sheet-cells 32 32))))
-     (:main (sdl:draw-surface-at-* img 150 0)
+     (:main
+      ;;(when (and (numberp (sdl:mouse-x)) (numberp (sdl:mouse-y)))
+   
+      (sdl:draw-surface-at-* img 150 0)
 	    (sdl:draw-surface-at-* img2 150 260)
-	    ;(format t "~a" (shf:get-sprite guy))
-	    ;(break)
-	    (sdl:draw-surface-at-* (shf:get-sprite guy) 0 0)))))
+	    (sdl:draw-surface-at-* (shf:get-sprite guy) 0 0)
+
+	    (shf:draw-text (format nil "r-~a, g-~a, b-~a" r g b) #(0 0))
+
+	    (loop for point in points do
+		 (sdl:draw-pixel point :color (shf:get-color white)))
+	    (when (sdl:mouse-left-p)
+	      (push (vector (sdl:mouse-x) (sdl:mouse-y)) points))
+	    (setf (values r g b) (shf:get-color-at-pixel (vector (sdl:mouse-x) (sdl:mouse-y))))))))
 
 (defun main3 ()
   "state testing"
-  (let (box (box-dir #(:right :down)))
+  (let (box (box-dir #(:right :down)) (speed 5))
     (shf:main-loop
-     (:width 400 :height 200 :title "some new title!" :font-path "c:/te/")
+     (:width 400 :height 500 :title "some new title!" :font-path "c:/te/" ;:clear-color (shf:get-color black)
+	     )
      (:quit )
      
      (:init (shf:add-state :pause)
-	    (setf box (shf:make-box-sprite 15 15 (shf:get-color green))))
+	    (setf box (shf:make-circle-sprite 8 (shf:get-color green))))
 
+     (:mouse-down (shf:with-state :game (cond ((shf:is-mouse-key :wheel-down)
+			 (decf speed))
+			((shf:is-mouse-key :wheel-up)
+			 (incf speed)))))
+     
      (:key-down
       (when (shf:is-keys :sdl-key-p :sdl-key-pause)
 	(cond 
@@ -42,24 +76,46 @@
 	  ((shf:check-state :game)
 	   (shf:set-state :pause))))
       
-      (shf:with-state :game (when (shf:is-keys :sdl-key-q) (sdl:push-quit-event)))
+      (shf:with-state :game (when (shf:is-keys :sdl-key-q) (shf:set-state :quit)))
       (shf:with-state :menu (shf:set-state :game)))
      
      (:main
-      (shf:with-state :menu (shf:draw-text "hello from main! Press anykey!" #(0 0)))
-      
+      (shf:with-state :menu
+	(shf:draw-text "hello from main! Press anykey!" #(0 0))
+		      ;; Vector of 3 items, non activated, activated(collision of mouse \ keyactive), state to change to
+		      (let ((menu-items `((,(shf:make-image "newgame.png" :path "C:/te/assets/")
+					    ,(shf:make-image "newgame2.png" :path "C:/te/assets/")
+					    :game)
+					  (,(shf:make-image "options.png" :path "c:/te/assets/")
+					    ,(shf:make-image "options2.png" :path "c:/te/assets/")
+					    :options)
+					  (,(shf:make-image "quit.png" :path "c:/te/assets/")
+					    ,(shf:make-image "quit2.png" :path "c:/te/assets/")
+					    :quit))))
+			(shf:create-menu menu-items #(40 40) :spacing 30)))
+	
+		      
+      (shf:with-state :options
+	(shf:set-state :menu))
       (shf:with-state :game
 	;; collision
-	(cond ((shf:get-edge-dir box 'right) (setf (elt box-dir 0) :left))
-	      ((shf:get-edge-dir box 'left) (setf (elt box-dir 0) :right))
-	      ((shf:get-edge-dir box 'bottom) (setf (elt box-dir 1) :up))
-	      ((shf:get-edge-dir box 'top) (setf (elt box-dir 1) :down)))
+	(cond ((shf:get-edge-dir box 'right) (setf (elt box-dir 0) :left)
+	       (shf:set-sprite-pos box :x(- shf:*width* (shf:w box))))
+	      ((shf:get-edge-dir box 'left) (setf (elt box-dir 0) :right)
+	       (shf:set-sprite-pos box :x 0))
+	      
+	      ((shf:get-edge-dir box 'bottom) (setf (elt box-dir 1) :up)
+	       (shf:set-sprite-pos box :y (- shf:*height* (shf:h box))))
+	      ((shf:get-edge-dir box 'top) (setf (elt box-dir 1) :down)
+	       (shf:set-sprite-pos box :y 0)))
 	
 	;; movement
-	(shf:move-sprite box :horizontal (if (string= (elt box-dir 0) :right) 5 -5))
-	(shf:move-sprite box :vertical (if (string= (elt box-dir 1) :down) 5 -5))))
+	(shf:move-sprite box :horizontal (if (string= (elt box-dir 0) :right) speed (- speed)))
+	(shf:move-sprite box :vertical (if (string= (elt box-dir 1) :down) speed (- speed)))))
 
      (:post-draw
+      (unless (shf:check-state :menu)
+	(shf:draw-text (format nil "speed = ~a" speed) #(200 0)))
       (shf:with-state :pause
 	(shf:draw-text "Game paused!" #(150 75) :color (shf:get-color red)))))))
 
@@ -139,6 +195,8 @@
 
       ))))
 
+
+
 (defun move-test (box)
   (let ((speed (cond ((shf:is-keys :sdl-key-rshift :sdl-key-lshift)
 		      10)
@@ -146,30 +204,14 @@
 		      200)
 		     (t 1))))
     (when  (shf:is-keys :sdl-key-left)
-      (shf:move-sprite box :vertical (- speed)))
-    (when (shf:is-keys :sdl-key-right)
-      (shf:move-sprite box :vertical  speed))
-    (when (shf:is-keys :sdl-key-up)
       (shf:move-sprite box :horizontal (- speed)))
+    (when (shf:is-keys :sdl-key-right)
+      (shf:move-sprite box :horizontal  speed))
+    (when (shf:is-keys :sdl-key-up)
+      (shf:move-sprite box :vertical (- speed)))
     (when (shf:is-keys :sdl-key-down)
-      (shf:move-sprite box :horizontal speed))))
+      (shf:move-sprite box :vertical speed))))
 
-
-
- #||   
-(defun state1 ()
-  (sdl:draw-string-solid-* "We are in first state!" 0 20 :color (shf:get-color white)))
-
-(defun state2 ()
-  (sdl:draw-string-solid-* "We are in second state!" 0 20 :color (shf:get-color white)))
-||#
-
-
-(defun try-retry (try)
-  (handler-case
-       (funcall try)
-     (error (e)
-       (format t "Error!"))))
 
 (defun main ()
   "collision and sprite class testing"
@@ -185,13 +227,16 @@
      (:title "tester"
 	     :width 800
 	     :height 500
-	     :fps 15
+	     :fps 60
+	     
+	     :cursor "c:/te/cursor.png"
+	     :cursor-offset #(16 16)
+     
 	     :font-path "c:/te/"
 	     :draw-sprites nil)
      ;; Appends the init-form:
      (:init 
       ; (shf:set-state "test")
-      (shf:make-sprite-sheet "c:/te/images/sprites.png" '((0 0 32 32) (0 32 32 32) (500 500 32 32)) :color-key-pos #(0 0))
       
       (setf colide-once nil)
       

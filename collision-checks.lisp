@@ -156,6 +156,8 @@ so end position uses standard non-range collision"
 (defgeneric mouse-collision-check (object &optional mouse)
   (:documentation "Collision checking between object and the current position of the mouse"))
 
+(defmethod mouse-collision-check ((object vector) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
+  (and (pixel-rect-collision-check (elt object 0) (elt object 1) (elt object 2) (elt object 3) (elt mouse 0) (elt mouse 1))))
 
 (defmethod mouse-collision-check ((object sprite-class) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (let ((col nil)
@@ -171,25 +173,6 @@ so end position uses standard non-range collision"
 		   (push hitbox col))))
     (list col)))
 
-#||
-(defmethod mouse-collision-check ((object vector))
-  "text collision, done by passing a vector consisting of 0-string, 1-Xpos, 2-Ypos, 4-font,  optional 5th parameter is collision name"
-    (let* ((text (elt object 0))
-	   (x (elt object 1))
-	   (y (elt object 2))
-	   (font (elt object 3))
-	   (name (if (> (length object) 4) (elt object 4) text)))
-      
-      (if (pixel-rect-collision-check
-	   x y ;x\y position
-	   (sdl:get-font-size text :size :w :font font) ; width of text field
-	   (sdl:get-font-size text :size :h :font font) ; height of text field
-	   (sdl:mouse-x) (sdl:mouse-y))
-	  ;; Passes optional collision name if a 4th element exist in vector
-	  name
-	  nil)))
-||#
-
 (defmethod mouse-collision-check ((object circle) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (if (pixel-circle-collision-check (x object) (y object) (r object) (elt mouse 0) (elt mouse 1))
       object
@@ -200,13 +183,13 @@ so end position uses standard non-range collision"
       object
       nil))
 
-(defun mouse-text-collision (text x y  &key (font sdl:*default-font*) (name text))
+(defun mouse-text-collision (text x y  &key (mouse-x (sdl:mouse-x)) (mouse-y (sdl:mouse-y)) (font sdl:*default-font*) (name text))
+  ""
   (if (pixel-rect-collision-check
        x y
-       (sdl:get-font-size text :size :w :font font) ; width of text field
-       (sdl:get-font-size text :size :h :font font) ; height of text field
-       (sdl:mouse-x) (sdl:mouse-y))
-      
+       (sdl:get-font-size text :size :w :font font)
+       (sdl:get-font-size text :size :h :font font)
+       mouse-x mouse-y)
       name
       nil))
 

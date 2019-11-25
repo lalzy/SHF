@@ -7,9 +7,28 @@
 (defparameter *mouse-move-direction* #(none none)) ;direction mouse is currently moving
 
 (defparameter *cursor* nil) ; Custom mouse cursor
-(defparameter **cursor-offset** nil)
+(defparameter *cursor-offset* nil)
 (defparameter *Current-mouse-button* nil)
 (defparameter *mouse-state* 0)
+
+(defun is-mouse-key (key)
+  "Checks if a mouse button has been pressed"
+  (when (numberp *current-mouse-button*)
+    (case key
+      (:left
+       (= *current-mouse-button* 1))
+      (:middle
+       (= *current-mouse-button* 2))
+      (:right
+       (= *current-mouse-button* 3))
+      (:wheel-up
+       (= *current-mouse-button* 4))
+      (:wheel-down
+       (= *current-mouse-button* 5))
+      (:x1
+       (= *current-mouse-button* 6))
+      (:x2
+       (= *current-mouse-button* 7)))))
 
 ;Rename to key a
 (defun is-keys (&rest keys)
@@ -34,12 +53,17 @@
 	(code-char (elt *key-pressed-code* 1))
 	nil)))
 
-(defun create-cursor (img-src &key (offset #(0 0)) (color-key #(0 0)))
+(defun create-cursor (img-src &optional (offset #(0 0)) (color-key #(0 0)))
   "Creates a custom mouse-cursor from an image"
-  (setf *cursor* (sdl:blit-surface
-		  (sdl:load-image "c:/te/cursor.bmp" :color-key-at color-key))
-	*cursor-offset* offset)
-  (sdl:show-cursor nil))
+  (unless (or (typep img-src 'pathname) (stringp img-src))
+    (error "Cursor needs to be either a string, or a pathname!"))
+  
+  (sdl:show-cursor nil)
+  (setf *cursor*
+	(sdl:blit-surface
+	 (sdl:load-image img-src :color-key-at color-key))
+	*cursor-offset* offset))
+  
 
 
 (defun mouse-move-direction (old-x x old-y y)

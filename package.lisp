@@ -30,12 +30,12 @@
    ;; Mouse
    #:*mouse-move-direction*
    #:*mouse-state*
-   #:*Current-mouse-button*
    #:warp-mouse-at-*
    #:warp-mouse
    #:create-cursor
    :*cursor*
-   
+   :*cursor-offset*
+   #:is-mouse-key
 
    ;; Menu \ States
    #:check-state
@@ -48,10 +48,11 @@
    
    ;; Colors
    :*colors*
-   #:get-rgb
    #:get-color
    #:add-color
-
+   #:get-color-at-pixel
+   #:get-color-at-pixels
+   
    ;; Generic drawing things
 
    ;; Generic Accessors or class parameter editors

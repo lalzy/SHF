@@ -21,6 +21,7 @@
   :components ((:file "package")
 	       
 	       ;; Core building blocks
+	       (:file "colors")
 	       (:file "Shape-classes")
 
 	       (:file "hitboxes")

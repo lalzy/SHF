@@ -72,13 +72,11 @@
 (defparameter *debug* nil) ; Debugging mode
 (defparameter *debug-hitbox-draw* nil) ; Drawing the hitboxes
 					;(defparameter *mouse-held-scroll-box* nil) ;; Used for scrolling
+(defparameter *assets-path* #p"")
 
-(defmacro with-window (width height fps title icon fullscreen borderless position default-font font-path capture-mouse &body body)
+(defmacro with-window (width height fps title icon fullscreen borderless position default-font font-path capture-mouse sw hw &body body)
   (alexandria:with-gensyms (font)
-    `(sdl:with-init ()
-       ;;(init ,width ,height ,fps ,capture-mouse ,default-font)
-
-       
+    `(sdl:with-init ()       
        (sdl:init-video)
        (sdl:enable-unicode)
        (if ,width
@@ -110,7 +108,7 @@
        (CFFI-init)
        
        (sdl:window *width* *height* :title-caption ,title :no-frame ,borderless
-		   :fullscreen ,fullscreen :position ,position)
+		   :fullscreen ,fullscreen :position ,position :sw ,sw :hw ,hw)
        
        (setf (sdl:frame-rate) ,fps)
        ,@body)))
@@ -118,54 +116,77 @@
 
 
 (defmacro main-loop ((&key width height (title "working title") (fps 60) icon fullscreen borderless position
-			   debug-mode capture-mouse (draw-sprites t) default-font font-path)
+			   debug-mode capture-mouse (draw-sprites t) default-font (font-path #p"") assets-path
+			   cursor (cursor-offset #(0 0)) sw hw)
 		     &rest body)
+  "main loop macro for sdl, handling generic stuff, takes a list of keyword parameters followed by forms:
+:pre-init - initialization before sdl is called
+:init - initialization after sdl is started and a window has been initialized and started
+:quit - The exit event of sdl.
+:close - Done before the program stops, either by quitting or crashing.
+:key-[down\up] - key event
+:mouse-[motion\up\down] - Mouse event
+:Joystick- - joystick\gamepad events
+
+:window-focus - when the window lose\gain focus
+:main - in the idle loop, before all automatic code takes place
+:post-draw - in the idle sdl loop, done after our automatic drawing.
+
+"
   
   (let (pre-window-form post-window-form main-form after-draw-main-form end-form key-down-form key-up-form
 			mouse-down-form mouse-up-form window-focus-form mouse-move-form close-form)
     (loop for item in body do
-	 (case (first item)
-	   ((:pre-window-init :pre-init) (setf pre-window-form (rest item)))
-	   ((:post-window-init :post-init :init) (setf post-window-form (rest item)))
-	   ((:main :idle) (setf main-form (rest item)))
-	   ((:post-draw :post-draw-main :late-main) (setf after-draw-main-form (rest item)))
-	   ((:close :finish :protect) (setf close-form (rest item))) 
-	   ((:key-down :key-down-event) (setf key-down-form (rest item)))
-	   ((:key-up :key-up-event) (setf key-up-form (rest item)))
-	   ((:mouse-move :mouse-motion-event :mouse-motion) (setf mouse-move-form (rest item)))
-	   ((:mouse-down :mouse-down-event :mouse-button-down-event) (setf mouse-down-form (rest item)))
-	   ((:mouse-up :mouse-up-event :mouse-button-up-event) (setf mouse-up-form (rest item)))
-	   ((:window-focus :winow) (setf window-focus-form (rest item)))
-	   ((:quit :end :quit-event)  (setf end-form (rest item)))))
-
+	 (when (> (length item) 1) ;Only add if we have something to add
+	   (case (first item)
+	     ((:pre-window-init :pre-init) (setf pre-window-form (rest item)))
+	     ((:post-window-init :post-init :init) (setf post-window-form (rest item)))
+	     ((:main :idle) (setf main-form (rest item)))
+	     ((:post-draw :post-draw-main :late-main) (setf after-draw-main-form (rest item)))
+	     ((:close :finish :protect) (setf close-form (rest item))) 
+	     ((:key-down :key-down-event) (setf key-down-form (rest item)))
+	     ((:key-up :key-up-event) (setf key-up-form (rest item)))
+	     ((:mouse-move :mouse-motion-event :mouse-motion) (setf mouse-move-form (rest item)))
+	     ((:mouse-down :mouse-down-event :mouse-button-down-event) (setf mouse-down-form (rest item)))
+	     ((:mouse-up :mouse-up-event :mouse-button-up-event) (setf mouse-up-form (rest item)))
+	     ((:window-focus :winow) (setf window-focus-form (rest item)))
+	     ((:quit :end :quit-event)  (setf end-form (rest item)))))
+)
     
-    (when borderless
-      (unless position
-	(setf position #(0 0))))
-
-    (alexandria:with-gensyms (font previous-mouse-x previous-mouse-y mouse-move-direction)
+    (alexandria:with-gensyms (previous-mouse-x previous-mouse-y)
       `(progn
 	 ,@pre-window-form
 	 
+	 (when ,borderless
+	   (unless ,position
+	     (setf ,position #(0 0))))
+
+	 (when ,assets-path
+	   (format t"-----------------------------------
+assets-path is not yet implemented!
+-----------------------------------~%"))
+	 
 	 (with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,position ,default-font ,font-path
-	     ,capture-mouse
+	     ,capture-mouse ,sw ,hw
+	   (when ,cursor
+	     (create-cursor ,cursor ,cursor-offset))
 	   ,@post-window-form
 	   (unwind-protect
-		(let (,previous-mouse-x ,previous-mouse-y ,mouse-move-direction)
+		(let (,previous-mouse-x ,previous-mouse-y)
 		  (sdl:with-events ()
-		    (:quit-event () ,@end-form (setf *state* (first (last *states*))) (empty-sprite-group) t)
+		    (:quit-event () ,@end-form  (setf *state* (first (last *states*)) *cursor* nil) (empty-sprite-group) t)
 
-		    (:mouse-motion-event (:state state :x x :y y)
-					 (setf *mouse-move-direction* (mouse-move-direction previous-x x previous-y y))
+		    (:mouse-motion-event (:x x :y y)
+					 (setf *mouse-move-direction* (mouse-move-direction ,previous-mouse-x x ,previous-mouse-y y))
 					 ,@mouse-move-form)
 		    
-		    (:mouse-button-down-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
+		    (:mouse-button-down-event (:BUTTON BUTTON :STATE STATE)
 					      (setf *current-mouse-button* button
 						    *mouse-state* state)
 					      ,@mouse-down-form)
 		    
-		    (:mouse-button-up-event (:BUTTON BUTTON :STATE STATE :X X :Y Y)
-					    (setf *current-mouse-button* button
+		    (:mouse-button-up-event (:STATE STATE)
+					    (setf *current-mouse-button* nil
 						  *mouse-state* state)
 					    (dolist (sb *scroll-boxes-list*)
 					      (setf (is-active? sb) nil))
@@ -176,7 +197,7 @@
 				     (setf *key-pressed-code* (list key unicode))
 				     (setf *key-pressed-state* (sdl:key-state-p))
 				     ,@key-down-form)
-		    (:key-up-event (:key key :unicode unicode)
+		    (:key-up-event ( :unicode unicode)
 				   ;; Removes keypresses from global variables
 				   (setf *key-pressed-code* (list nil unicode))
 				   (setf *key-pressed-state* (sdl:key-state-p))
@@ -186,8 +207,19 @@
 				   ,@window-focus-form)
 		    
 		    (:idle ()
+			   ;; ensures that we always have a surface drawn,
+			   ;; as if we don't explictedly draw the display
+			   ;; to the default-surface, and draw the default surface
+			   ;; it'll be nil, which read-pixel is unable to read from.
 			   (sdl:clear-display (get-color black))
+			   (setf sdl:*default-surface* sdl:*default-display*)
+			   (sdl:draw-surface sdl:*default-surface*)
+
+			   
 			   ,@main-form
+
+			   (when (check-state :quit)
+			     (sdl:push-quit-event))
 			   
 			   ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
 			   (when (and ,draw-sprites (not (check-state :menu)))
@@ -202,8 +234,8 @@
 
 			   ||#
 			   ;; Mouse direction
-			   (setf previous-x (sdl:mouse-x)
-				 previous-y (sdl:mouse-y))
+			   (setf ,previous-mouse-x (sdl:mouse-x)
+				 ,previous-mouse-y (sdl:mouse-y))
 			   
 			   (setf *mouse-move-direction* #(none none))
 
@@ -212,16 +244,19 @@
 			   
 			   ;; Draws custom cursor
 			   (when *cursor*
-			     (sdl:draw-surface-at *cursor* (vector (- (sdl:mouse-x) (elt *cursor-offset* 0))
-								   (- (sdl:mouse-y) (elt *cursor-offset* 1)))))
+			     (sdl:draw-surface-at *cursor*
+						  (vector (- (sdl:mouse-x) (elt  *cursor-offset*
+										0))
+							  (- (sdl:mouse-y) (elt  *cursor-offset*
+										1)))))
 			   
 			   (sdl:update-display))
 		    
+		    ,@close-form
 		    (sdl-ttf:quit-ttf)
 		    (sdl-mixer:halt-music)
 		    (sdl-mixer:close-audio t)
-		    (sdl:free sdl:*default-font*)
-		    ,@close-form))))))))
+		    (sdl:free sdl:*default-font*)))))))))
 
 #+:ccl (defun create-exe (name function &key (exe-extention? t) (path "C:/te/") (app-type :gui) (error-hook t))
 	 "Create an executable"

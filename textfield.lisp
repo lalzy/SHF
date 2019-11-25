@@ -23,15 +23,10 @@
 	 :Documentation "Font used by the textfield")
    (background :accessor text-field-background
 	       :initarg :background)
-   #||
-   (amount-of-lines :accessor get-line-amount
-		    :Documentation "The amount of lines the text-field hold"
-		    u		    :initarg :line-amount)
-   ||#
    (hitbox :accessor get-hitbox
 	   :initarg :hitbox)))
 
-(defun get-line2-amount (textfield)
+(defun get-line-amount (textfield)
   (length (get-text textfield)))
 
 (defmethod change-surface ((object text-field) &key alpha)
@@ -81,7 +76,7 @@
 
 (defun hidden-vertical-lines (text-field)
   "Lines that we can't see in the text-field"
-  (- (get-line2-amount text-field) (text-field-shown-lines text-field)))
+  (- (get-line-amount text-field) (text-field-shown-lines text-field)))
 
 (defun max-vertical-scroll-distance (text-field)
   "The maximum amount that can be  scrolled vertically"
@@ -137,14 +132,18 @@
 	(when (> max 0) ;; Ensure no scrolling if there are no characters to scroll
 	  (setf (get-text-x text-field) (- (scrolling text-field scroll-bar 'x max))))))))
 
-(defun valid-text-in-field (text)
+(defun text-field-has-text? (text)
   "Ensures there is text to be drawn"
   (if (> (length (first text)) 0)
       t))
 
+
+
+;;; Drawing
+
 (defun draw-text-on-text-field (textfield &key text (color (get-color white)))
   "draws lines of text ontop of a text field"
-  (when (or (valid-text-in-field (get-text textfield)) text)
+  (when (or (text-field-has-text? (get-text textfield)) text)
     (shf:draw-text-with-lines  (if text text
 				   (get-text textfield))
 			       (get-surface textfield)

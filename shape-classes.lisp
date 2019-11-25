@@ -2,35 +2,6 @@
 
 (in-package #:sdl-helper-functions)
 
-(defparameter *colors* `((white ,(sdl:color :r 255 :g 255 :b 255))
-			 (black ,(sdl:color :r 0 :g 0 :b 0))
-			 (darkgray ,(sdl:color :r 50 :g 50 :b 50))
-			 (gray ,(sdl:color :r 160 :g 160 :b  160))
-			 (lightgray ,(sdl:color :r 211 :g 211 :b 211))
-			 (green ,(sdl:color :r 0 :g 255 :b 0))
-			 (red ,(sdl:color :r 255 :g 0 :b 0))
-			 (blue ,(sdl:color :r 0 :g 0 :b 255))
-			 (cyan ,(sdl:color :r 0 :g 255 :b 255))
-			 (yellow ,(sdl:color :r 255 :g 255 :b 0))))
-
-;; Colors
-(defmacro add-color (color &key (r 0) (g 0) (b 0))
-  "Add a color to the *colors* list"
-  `(push (list ',color (sdl:color :r ,r :g ,g :b ,b)) ,*colors*))
-
-(defun find-color (color)
-  "helper function for get-color"
-  (cadr (assoc color *colors* :test #'string=)))
-
-(defmacro get-color (color)
-  "Returns a chosen color from the list of SDL colors found in *colors*"
-  `(find-color ',color))
-
-(defun get-rgb (&key (r 0) (g 0) (b 0))
-  "Get an SDL color object from passed R,G,B"
-  (sdl:color :r r :g g :b b))
-
-
 ;; Shapes
 (defclass pos ()
   ((x :initarg :x :accessor x)
@@ -94,8 +65,10 @@
 
 
 
-;; Surface
-(defgeneric change-surface (object &key alpha))
+;;; Surface, each class that have surfaces have their own method in their respective source files
+(defgeneric change-surface (object &key alpha)
+  (:documentation "used to replace old surface for new parameters, 
+such as changing the alpha of it, each specified type that uses surfaces have it's own method"))
 
 (defmethod change-surface (object  &key alpha)
   (let* ((old-surface (get-surface object))
