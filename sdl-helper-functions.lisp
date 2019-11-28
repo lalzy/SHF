@@ -5,7 +5,8 @@
 ;;;   Code Conventions:
 ;;;    Aux:
 ;;;      Used to store objects, or parts of global lists
-;;;
+;;;      Or one use variables(such as in clone-sprite)
+;;;      
 ;;;   Go to Shape-classes.lisp, SHF-Error-Handling and change the respected functions for your implementation
 ;;;       > Also alternativly create a new create-exe function for your implementation
 ;;;   
@@ -13,9 +14,7 @@
 ;;;            causes crash on exit
 ;;;   
 ;;; WORKING ON:
-;;;   Use unified library for CCL specified things.
 ;;;   Optional character limit in textfield
-;;;   
 ;;;   
 ;;;   
 ;;;   
@@ -57,7 +56,6 @@
 ;;;          position, instead of using 0
 ;;;
 ;;; ------ Performance concerns ------
-;;;
 ;;;  The Linewrapping function\system:
 ;;;     > It constantly does the calculation for each word, while it only draws what can be seen, the amount of words
 ;;;        can potentionally cause high performance loss.
@@ -117,7 +115,7 @@
 
 (defmacro main-loop ((&key width height (title "working title") (fps 60) icon fullscreen borderless position
 			   debug-mode capture-mouse (draw-sprites t) default-font (font-path #p"") assets-path
-			   cursor (cursor-offset #(0 0)) sw hw)
+			   cursor (cursor-offset #(0 0)) sw hw (default-surface-drawing t))
 		     &rest body)
   "main loop macro for sdl, handling generic stuff, takes a list of keyword parameters followed by forms:
 :pre-init - initialization before sdl is called
@@ -207,13 +205,15 @@ assets-path is not yet implemented!
 				   ,@window-focus-form)
 		    
 		    (:idle ()
+			   (sdl:clear-display (get-color black))
+
 			   ;; ensures that we always have a surface drawn,
 			   ;; as if we don't explictedly draw the display
 			   ;; to the default-surface, and draw the default surface
 			   ;; it'll be nil, which read-pixel is unable to read from.
-			   (sdl:clear-display (get-color black))
-			   (setf sdl:*default-surface* sdl:*default-display*)
-			   (sdl:draw-surface sdl:*default-surface*)
+			   (when ,default-surface-drawing
+			     (setf sdl:*default-surface* sdl:*default-display*)
+			     (sdl:draw-surface sdl:*default-surface*))
 
 			   
 			   ,@main-form

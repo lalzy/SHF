@@ -26,6 +26,35 @@
    (hitbox :accessor get-hitbox
 	   :initarg :hitbox)))
 
+
+;; Decleared here rather than textfield.lisp becaus of dependencies
+(defun create-text-field (&key (x 0) (y 0) (w *width*) (h *height*) state
+			    (background (get-color white))
+			    (font sdl:*default-font*)
+			    (text nil)
+			    (text-x 0)
+			    (text-y 0)
+			    (active nil)
+			    (hitbox-color background)
+			    (alpha 255))
+  "Rewrite to create a text-field based on height\width parameters, and optional background, 
+also create collision detection for mouse
+
+Get the x,y,width,height, create a surface with width\height and draw it"
+
+  (let ((surface (sdl:create-surface w h  :alpha alpha)))
+    (when background
+      (sdl:draw-box-* 0 0 w h :surface surface
+		      :color background))
+    (make-instance 'text-field :surface surface :x x :y y :w w :h h :state state
+		   :background background  :font font :alpha alpha :active active
+		   :text text :text-x text-x :text-y text-y
+
+		   ;; Unsure about hitbox for text-field, might not have one
+		   :hitbox (create-hitbox 'rect :x x :y y :w w :h h :color hitbox-color)
+		   )))
+
+
 (defun get-line-amount (textfield)
   (length (get-text textfield)))
 
@@ -89,15 +118,16 @@
 (defun get-longest-line (text-field)
   "Loop through the text in the textfield, to get the sentence that's the longest"
   (when (> (length (get-text text-field)) 0)
-    (loop for i to (1- (length (get-text text-field)))
-       with text = (get-text text-field)
-       with longest-line = (elt text 0)
-       with current-line
-       finally (return longest-line)
-       do
-	 (setf current-line (elt (get-text text-field) i))
-	 (when (> (length current-line) (length longest-line))
-	   (setf longest-line current-line)))))
+    ;(loop for i to (last-index (get-text text-field))
+    (iter (for i to (last-index (get-text text-field)))
+       (with text = (get-text text-field))
+       (with longest-line = (aref text 0))
+       (with current-line)
+       (finally (return longest-line))
+       
+       (setf current-line (aref (get-text text-field) i))
+       (when (> (length current-line) (length longest-line))
+	 (setf longest-line current-line)))))
 
 (defun horizontal-text-size (text-field)
   "The pixel-size of the longest sentence of all the lines"
@@ -134,8 +164,7 @@
 
 (defun text-field-has-text? (text)
   "Ensures there is text to be drawn"
-  (if (> (length (first text)) 0)
-      t))
+  (and text (> (length text) 0)))
 
 
 

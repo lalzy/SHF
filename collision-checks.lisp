@@ -36,18 +36,6 @@ Optionally if old-pos(a position vector) is set will do a range collision check,
     col))
 
 
-#||
-(defmethod collision-check ((object1 sprite-class) (object2 sprite-class) &optional old-obj)
-  (let ((col nil)
-	(h1 nil)
-	(h2 nil))
-    (loop-hitbox object1 h1
-	 (loop-hitbox object2 h2
-	      (let ((res (get-collision h1 h2 old-obj)))
-		(when res (push res col)))))
-    col))
-||#
-
 (defmethod collision-check ((object1 sprite-class) object2 &optional old-obj)
   (let ((col nil)
 	(h1 nil))

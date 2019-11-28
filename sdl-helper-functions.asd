@@ -6,8 +6,10 @@
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
   :depends-on (#:shf-error-handling 
+	       #:iterate
 	       #:cffi
 	       #:alexandria
+	       #:closer-mop
 	       #:uiop
 	       #:cl-utilities
                #:bt-semaphore
@@ -21,6 +23,7 @@
   :components ((:file "package")
 	       
 	       ;; Core building blocks
+	       (:file "utilities")
 	       (:file "colors")
 	       (:file "Shape-classes")
 

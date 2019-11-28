@@ -18,13 +18,11 @@
   (:documentation "A rectangle"))
 
 ;; Change to use a generic package instead
-(defun clone-sprite (object &aux (copy (allocate-instance (class-of object))) 
-                                 (slot-definition-name #+:ccl #'ccl:slot-definition-name
-						       #+:sbcl #'sb-mop:slot-definition-name)
-								 (class-slots #+:ccl #'ccl:class-slots
-								              #+sbcl #'sb-mop:class-slots))
+(defun clone-sprite (object &aux (copy (allocate-instance (class-of object))))
   "Clones an object."
-  (loop for slot in (mapcar slot-definition-name (funcall class-slots (class-of object)))
+  (loop for slot in (mapcar #'closer-mop:slot-definition-name
+			    (closer-mop:class-slots (class-of object)))
+			    ;(funcall class-slots (class-of object)))
      with value do ; holds the slot value from original object
        (when (slot-boundp object slot)
 	 (setf value (slot-value object slot))

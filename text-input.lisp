@@ -5,10 +5,9 @@
 
 (in-package #:sdl-helper-functions)
 
-
 (defun create-new-line (text-list)
   (if text-list
-      (push nil (cdr (last text-list)))))
+      (vector-push-extend "" text-list)))
 
 (defun append-character-to-string (text new-char)
   (concatenate 'string text (string new-char)))
@@ -32,17 +31,22 @@ sees it as numbers, but the unicode characters are not numbers."
 
 (defun add-character-to-textfield (textfield index text new-char)
   (if (>= index 0)
-      (setf (elt (get-text textfield) index) (append-character-to-string text new-char))
-      (setf (get-text textfield) (list (string new-char)))))
+      (setf (aref (get-text textfield) index) (append-character-to-string text new-char))
+      (setf (get-text textfield) (make-array 1 :fill-pointer t :adjustable t :initial-element ;list
+				  (string new-char)))))
 
 (defun remove-character-from-textfield (textfield index)
   (when (>= index 0)
-    (let* ((text (elt (get-text textfield) index))
+    (let* ((text (aref (get-text textfield) index))
 	   (length (length text)))
-    
+
       (if (> length 0)
-	  (setf (elt (get-text textfield) index) (subseq text 0 (1- length)))
-	  (setf (get-text textfield) (remove-if #'(lambda (x) t) (get-text textfield) :from-end t :count 1))))))
+	  (setf (aref (get-text textfield) index) (subseq text 0 (1- length)))
+
+	  ;; Removes the text line if it's not the last line
+	  (when (> (length (get-text textfield)) 1) 
+	      (adjust-array (get-text textfield) (last-index (get-text textfield)) :fill-pointer t))))))
+
 
 (defun is-mod-key (sdl-key list-of-mod-keys)
   (mapcar #'(lambda (key) (if (string-equal sdl-key key)
@@ -54,7 +58,7 @@ sees it as numbers, but the unicode characters are not numbers."
   "Sums up all characters found in the text(list), optionally sums up each line as well"
   (let ((sum (loop for text in text-list sum (length text))))
        (if count-lines
-	   (+ (1- (length text-list)) sum)
+	   (+ (last-index text-list) sum)
 	   sum)))
 
 (defun check-max-text-length (max-length text-list count-lines)
@@ -62,6 +66,9 @@ sees it as numbers, but the unicode characters are not numbers."
   (cond ((null max-length) t)
 	((and (numberp max-length) (< (count-characters text-list count-lines) max-length)))))
 
+
+
+;; Rewrite to support vector instead of list
 (defun input-text-to-field (textfield &key (count-lines t) multi-lines max-length (list-of-mod-keys
 					 		`(:SDL-KEY-LSHIFT  :SDL-KEY-RSHIFT :sdl-key-rctrl :sdl-key-lsuper
 							  :sdl-key-rsuper :sdl-key-ralt :sdl-key-lalt :sdl-key-menu
@@ -84,10 +91,16 @@ sees it as numbers, but the unicode characters are not numbers."
 	(get-pressed-key)
       (unless (is-mod-key sdl-key list-of-mod-keys)
 	(let* ((text-list (get-text textfield))
-	       (text (first (last text-list))))
+	       (text (if text-list
+			 (aref text-list (last-index text-list))
+			 (make-array 1 :adjustable t :fill-pointer 0))))
+					;(text (first (last text-list))))
+
 	  (when (or (check-max-text-length max-length text-list count-lines) (string-equal sdl-key :sdl-key-backspace))
 	  (cond ((and multi-lines (string-equal sdl-key :sdl-key-return))
 		 (setf text-list (create-new-line text-list)))
 		((string-equal sdl-key :sdl-key-backspace)
-		 (remove-character-from-textfield textfield (1- (length text-list))))
-		(t (add-character-to-textfield textfield (1- (length text-list)) text (or (check-keypad-num sdl-key) unicode-key))))))))))
+		 (remove-character-from-textfield textfield (last-index text-list)))
+		(t (add-character-to-textfield textfield (last-index text-list) text (or (check-keypad-num sdl-key) unicode-key))))))))))
+
+	 

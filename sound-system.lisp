@@ -21,14 +21,15 @@
     (setf sound (format nil "~a" sound)))
   
   ;; Looks for . from the end to the beginning, then returns a subseq from beginning to right before the .
-  (let* ((i (length sound)))
+  (let* ((index (length sound)))
     (iter (for x :in-sequence sound :downto 0)
-	  (decf i)
+	  (decf index)
 	  (when (equalp x #\.)
 	    (return)))
-    (if (<= i 0)
+
+    (if (<= index 0)
 	sound
-	(subseq sound 0 i))))
+	(subseq sound 0 index))))
 
 (defun remove-path (file path)
   "removes the path from a file-name"

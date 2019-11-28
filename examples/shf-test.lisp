@@ -83,13 +83,13 @@
       (shf:with-state :menu
 	(shf:draw-text "hello from main! Press anykey!" #(0 0))
 		      ;; Vector of 3 items, non activated, activated(collision of mouse \ keyactive), state to change to
-		      (let ((menu-items `((,(shf:make-image "newgame.png" :path "C:/te/assets/")
+		      (let ((menu-items `#(#(,(shf:make-image "newgame.png" :path "C:/te/assets/")
 					    ,(shf:make-image "newgame2.png" :path "C:/te/assets/")
 					    :game)
-					  (,(shf:make-image "options.png" :path "c:/te/assets/")
+					  #(,(shf:make-image "options.png" :path "c:/te/assets/")
 					    ,(shf:make-image "options2.png" :path "c:/te/assets/")
 					    :options)
-					  (,(shf:make-image "quit.png" :path "c:/te/assets/")
+					  #(,(shf:make-image "quit.png" :path "c:/te/assets/")
 					    ,(shf:make-image "quit2.png" :path "c:/te/assets/")
 					    :quit))))
 			(shf:create-menu menu-items #(40 40) :spacing 30)))
@@ -126,7 +126,9 @@
 	(mouse-clicked nil)
 	(scroll-stop nil)
 	(init-string nil)
-	(string "hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the  this is the end")
+	(string (vector "this is a very long line for the sake of line testing and stuff you know, justto make sure everything is on the up and up,  this is however the [end]" "and this is a seperate line" "so is this" "and this" "tdsd" "sad"  "asd" "dd" "asd" "asd" "dd" "asd" "asd" "dd" "asd" "asd" "the end"))
+
+	 ;;"hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the  this is the end")
 	(text-field nil)
 	(scroll-bar nil)
 	(scroll-bar2 nil)
@@ -151,15 +153,15 @@
 		  (tf-x 200)
 		  (tf-y 50)
 		  (font (shf:get-font :size 15)))
-	      (setf (values string lines height) (shf:line-wrapping string tf-w :font font))
-	      (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font)) ;:text string :line-amount lines))
+	      ;(setf (values string lines height) (shf:line-wrapping string tf-w :font font))
+	      (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font :text string))
 	      (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 31 :direction 'y :sb-hitbox-color (shf:get-color red) ))
 	      (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
 
      (:mouse-up (when (shf:mouse-collision-check text-field)
 		  (setf (shf:is-active? text-field) t)))
      (:key-down
-       (shf:input-text-to-field text-field :multi-lines t :count-lines nil :max-length 5))
+       (shf:input-text-to-field text-field :multi-lines t))
      
       ;; Appends the main form \ gameplay-loop
       (:main
