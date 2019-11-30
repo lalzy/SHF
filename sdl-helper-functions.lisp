@@ -103,7 +103,7 @@
        
        
        (sdl-mixer:open-audio :frequency *sound-frequency*)
-       (CFFI-init)
+       ;(CFFI-init)
        
        (sdl:window *width* *height* :title-caption ,title :no-frame ,borderless
 		   :fullscreen ,fullscreen :position ,position :sw ,sw :hw ,hw)
@@ -135,7 +135,7 @@
   (let (pre-window-form post-window-form main-form after-draw-main-form end-form key-down-form key-up-form
 			mouse-down-form mouse-up-form window-focus-form mouse-move-form close-form)
     (loop for item in body do
-	 (when (> (length item) 1) ;Only add if we have something to add
+	 (when (car item) ;Only add if we have something to add
 	   (case (first item)
 	     ((:pre-window-init :pre-init) (setf pre-window-form (rest item)))
 	     ((:post-window-init :post-init :init) (setf post-window-form (rest item)))
@@ -151,28 +151,30 @@
 	     ((:quit :end :quit-event)  (setf end-form (rest item)))))
 )
     
-    (alexandria:with-gensyms (previous-mouse-x previous-mouse-y)
-      `(progn
+    (alexandria:with-gensyms (previous-mouse-x previous-mouse-y position-variable)
+      `(let (,previous-mouse-x ,previous-mouse-y ,position-variable)
 	 ,@pre-window-form
+
 	 
 	 (when ,borderless
-	   (unless ,position
-	     (setf ,position #(0 0))))
+	   (setf ,position-variable (if ,position ,position #(0 0))))
 
 	 (when ,assets-path
 	   (format t"-----------------------------------
 assets-path is not yet implemented!
 -----------------------------------~%"))
 	 
-	 (with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,position ,default-font ,font-path
+	 (with-window ,width ,height ,fps ,title ,icon ,fullscreen ,borderless ,position-variable ,default-font ,font-path
 	     ,capture-mouse ,sw ,hw
 	   (when ,cursor
 	     (create-cursor ,cursor ,cursor-offset))
+
+	   ;(sdl:enable-key-repeat 300 300)
+	   
 	   ,@post-window-form
 	   (unwind-protect
-		(let (,previous-mouse-x ,previous-mouse-y)
 		  (sdl:with-events ()
-		    (:quit-event () ,@end-form  (setf *state* (first (last *states*)) *cursor* nil) (empty-sprite-group) t)
+		    (:quit-event () ,@end-form t)
 
 		    (:mouse-motion-event (:x x :y y)
 					 (setf *mouse-move-direction* (mouse-move-direction ,previous-mouse-x x ,previous-mouse-y y))
@@ -192,11 +194,13 @@ assets-path is not yet implemented!
 		    
 		    (:key-down-event (:key key :unicode unicode)
 				     ;; Adds key presses to global variables
+				     
 				     (setf *key-pressed-code* (list key unicode))
 				     (setf *key-pressed-state* (sdl:key-state-p))
 				     ,@key-down-form)
 		    (:key-up-event ( :unicode unicode)
 				   ;; Removes keypresses from global variables
+				   (setf *not-pressing* t)
 				   (setf *key-pressed-code* (list nil unicode))
 				   (setf *key-pressed-state* (sdl:key-state-p))
 				   ,@key-up-form)
@@ -227,12 +231,6 @@ assets-path is not yet implemented!
 			     (draw-hitboxes))
 
 
-			   ;; Test later after changing to Norwegian computer
-			   #||
-			   (draw-text (format nil "random-test - ~a" (sdl:GET-GLYPH-METRIC #\a :metric :maxy))
-			   #(0 50))
-
-			   ||#
 			   ;; Mouse direction
 			   (setf ,previous-mouse-x (sdl:mouse-x)
 				 ,previous-mouse-y (sdl:mouse-y))
@@ -246,18 +244,37 @@ assets-path is not yet implemented!
 			   (when *cursor*
 			     (sdl:draw-surface-at *cursor*
 						  (vector (- (sdl:mouse-x) (elt  *cursor-offset*
-										0))
+										 0))
 							  (- (sdl:mouse-y) (elt  *cursor-offset*
-										1)))))
+										 1)))))
 			   
-			   (sdl:update-display))
-		    
-		    ,@close-form
-		    (sdl-ttf:quit-ttf)
-		    (sdl-mixer:halt-music)
-		    (sdl-mixer:close-audio t)
-		    (sdl:free sdl:*default-font*)))))))))
+			   (sdl:update-display)))
+	     
+	     ,@close-form
+	     (setf *state* (first (last *states*))
+		   *cursor* nil *current-mouse-button* nil
+		   *key-pressed-code* nil
+		   *key-pressed-state* nil)
+	     (empty-sprite-group)
+	     (sdl-ttf:quit-ttf)
+	     (sdl-mixer:halt-music)
+	     (sdl-mixer:close-audio t)
+	     (sdl:free sdl:*default-font*)))))))
 
+#||
+(defun create-exe (name function &key (exe-extention t) (path "C:/te/") (app-type :gui) (error-hook t))
+  "Create an executable"
+  (shf-error:release-error error-hook)
+  
+  #+:ccl (ccl:save-application (merge-pathnames path (format nil "~a~:[~;.exe~]" name exe-extention))
+			:application-type app-type
+			:toplevel-function function :prepend-kernel t)
+  #+:sbcl (sb-ext:save-lisp-and-die (merge-pathnames path (format nil "~a~:[~;.exe~]" name exe-extention)
+						    :toplevel function
+						    :application-type app-type
+						    :executable t)))
+||#
+#||
 #+:ccl (defun create-exe (name function &key (exe-extention? t) (path "C:/te/") (app-type :gui) (error-hook t))
 	 "Create an executable"
 	 (shf-error:release-error error-hook)
@@ -265,7 +282,7 @@ assets-path is not yet implemented!
 			       :application-type app-type
 			       :toplevel-function function :prepend-kernel t))
 
-
+||#
 #||
 (WITH-EVENTS (TYPE)
  (:ACTIVE-EVENT (:GAIN GAIN :STATE STATE)

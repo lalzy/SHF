@@ -6,8 +6,10 @@
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
   :depends-on (#:shf-error-handling 
+           #:shf-SDL-CFFI
 	       #:iterate
 	       #:cffi
+	       #:trivial-dump-core
 	       #:alexandria
 	       #:closer-mop
 	       #:uiop

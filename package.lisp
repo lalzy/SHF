@@ -1,7 +1,7 @@
 ;;;; package.lisp
 (defpackage #:sdl-helper-functions
   (:nicknames  #:shf)
-  (:use #:cl #:cffi #:iterate)
+  (:use #:cl #:cffi #:shf-sdl-cffi #:iterate)
   (:export
 
    ;; Helper functions
@@ -30,13 +30,14 @@
    ;; Mouse
    #:*mouse-move-direction*
    #:*mouse-state*
-   #:warp-mouse-at-*
+  ; #:warp-mouse-at-*
    #:warp-mouse
    #:create-cursor
    :*cursor*
    :*cursor-offset*
    #:is-mouse-key
-
+   #:is-mouse-keys
+   
    ;; Menu \ States
    #:check-state
    #:create-menu

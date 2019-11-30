@@ -2,7 +2,7 @@
 
 (defparameter *key-pressed-code* nil) ; List of current key pressed(first element is sdl key, second is unicode code)
 (defparameter *key-pressed-state* nil) ; A list of the current key state
-
+(defparameter *not-pressing* t) ;; Stops us from beng able to keep a key pressed down
 
 (defparameter *mouse-move-direction* #(none none)) ;direction mouse is currently moving
 
@@ -29,6 +29,12 @@
        (= *current-mouse-button* 6))
       (:x2
        (= *current-mouse-button* 7)))))
+
+(defun is-mouse-keys (keys)
+  (if (listp keys)
+      (dolist (key keys)
+	(when (is-mouse-key key) (return t)))
+      (is-mouse-key keys)))
 
 ;Rename to key a
 (defun is-keys (&rest keys)
@@ -81,18 +87,3 @@
 
 
 
-;; Get mouse-wrap from sdl
-(defun CFFI-init ()
-  (cffi:define-foreign-library sdl
-    (:windows "sdl.dll"))
-  (cffi:use-foreign-library sdl)
-  
-  (cffi:defcfun ("SDL_WarpMouse" warp-mouse-at-*) :void
-    (x :unsigned-short)
-    (y :unsigned-short)))
-
-;; Create alternative mouse-setter
-(defun warp-mouse (point)
-  (when (or (not (vectorp point)) (> (length point) 2))
-    (error "Only accepts a vector of 2 cordinate points(x|y)"))
-  (warp-mouse-at-* (elt point 0) (elt point 1)))

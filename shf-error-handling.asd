@@ -4,7 +4,7 @@
   :description "Describe sdl-helper-functions here"
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
-  :depends-on (#:ftw #:alexandria)
+  :depends-on (#:alexandria #:cffi)
   :serial t
   :components ((:module "shf-error-handling"
                 :components

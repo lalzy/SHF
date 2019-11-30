@@ -8,8 +8,9 @@
   "random test"
   (let ()
     (shf:main-loop
-     (:font-path "c:/te/" :assets-path "c:/te" :width 500 :height 500)
-     (:main nil))))
+     (:font-path "c:/te/" :assets-path "c:/te" :width 500  :height 500)
+     (:main
+      (shf:draw-text "hello!" #(0 0))))))
 
 (defun main6 ()
   "cursor test"
@@ -30,7 +31,7 @@
 
 (defun main4 ()
   "Image testing"
-  (let (img img2 guy r g b points)
+  (let (img img2 guy r g b points (color (shf:get-color white)))
     (shf:main-loop
      (:width 500 :height 500 :title "image testing" :font-path "C:/quicklisp/local-projects/sdl-helper-functions/assets/")
      (:init 
@@ -38,7 +39,6 @@
 	    (setf img2 (shf:make-image "test2.png" :path "C:/quicklisp/local-projects/sdl-helper-functions/assets/"))
 	    (setf guy (shf:create-sprite "sprite.png" :path #p"c:/te/" :x 0 :y 0 :cells (shf:generate-sheet-cells 32 32))))
      (:main
-      ;;(when (and (numberp (sdl:mouse-x)) (numberp (sdl:mouse-y)))
    
       (sdl:draw-surface-at-* img 150 0)
 	    (sdl:draw-surface-at-* img2 150 260)
@@ -47,14 +47,18 @@
 	    (shf:draw-text (format nil "r-~a, g-~a, b-~a" r g b) #(0 0))
 
 	    (loop for point in points do
-		 (sdl:draw-pixel point :color (shf:get-color white)))
+		 (sdl:draw-pixel (first point) :color (second point)))
+	   
+	    (setf (values r g b) (shf:get-color-at-pixel (vector (sdl:mouse-x) (sdl:mouse-y))))
+	    (when (sdl:mouse-right-p)
+	      (setf color (sdl:color :r r :g g :b b)))
+
 	    (when (sdl:mouse-left-p)
-	      (push (vector (sdl:mouse-x) (sdl:mouse-y)) points))
-	    (setf (values r g b) (shf:get-color-at-pixel (vector (sdl:mouse-x) (sdl:mouse-y))))))))
+	      (push (list (vector (sdl:mouse-x) (sdl:mouse-y)) color) points))))))
 
 (defun main3 ()
   "state testing"
-  (let (box (box-dir #(:right :down)) (speed 5))
+  (let (box (box-dir #(:right :down)) (speed 5) (mouse-select t))
     (shf:main-loop
      (:width 400 :height 500 :title "some new title!" :font-path "c:/te/" ;:clear-color (shf:get-color black)
 	     )
@@ -67,8 +71,10 @@
 			 (decf speed))
 			((shf:is-mouse-key :wheel-up)
 			 (incf speed)))))
-     
+     (:mouse-motion (shf:with-state :menu (setf mouse-select t)))
      (:key-down
+      (shf:with-state :menu (setf mouse-select nil))
+      
       (when (shf:is-keys :sdl-key-p :sdl-key-pause)
 	(cond 
 	  ((shf:check-state :pause) 
@@ -76,8 +82,7 @@
 	  ((shf:check-state :game)
 	   (shf:set-state :pause))))
       
-      (shf:with-state :game (when (shf:is-keys :sdl-key-q) (shf:set-state :quit)))
-      (shf:with-state :menu (shf:set-state :game)))
+      (shf:with-state :game (when (shf:is-keys :sdl-key-q) (shf:set-state :quit))))
      
      (:main
       (shf:with-state :menu
@@ -92,7 +97,7 @@
 					  #(,(shf:make-image "quit.png" :path "c:/te/assets/")
 					    ,(shf:make-image "quit2.png" :path "c:/te/assets/")
 					    :quit))))
-			(shf:create-menu menu-items #(40 40) :spacing 30)))
+			(shf:create-menu menu-items #(40 40) :spacing 30 :selection-style :keyboard-mouse :mouse-select-mode mouse-select)))
 	
 		      
       (shf:with-state :options
@@ -198,7 +203,6 @@
       ))))
 
 
-
 (defun move-test (box)
   (let ((speed (cond ((shf:is-keys :sdl-key-rshift :sdl-key-lshift)
 		      10)
@@ -301,6 +305,11 @@
 		 (shf:set-volume -1) (shf:set-music-volume -1))
 	       (when (shf:is-keys :sdl-key-g) (shf:play-song :track3))
 	       )
+		   
+		   
+		 (when (shf:is-keys :sdl-key-o) (shf:warp-mouse (vector 150 150)))
+		; (when (shf:is-keys :sdl-key-o) (shf-sdl-cffi:warp-mouse (vector 150 150)))
+		   
 	     (when (shf:is-keys :sdl-key-j)  (shf:delete-from-sprite-group box))
 	     (when (shf:is-keys :sdl-key-k) (shf:add-to-sprite-group box))
 	     (shf:music-stopped-form	;(shf:rotate-playlist)
@@ -416,6 +425,7 @@
 	 (when (shf:mouse-collision-check h1)
 	   (shf:draw-text "Mouse Collision! with rectangle!" #(0 340) :font (shf:get-font :size 18) :color (shf:get-color cyan)))
 
+     
 	 
       (when (shf:mouse-collision-check h2)
 	(shf:draw-text "Mouse Collision! with circle!" #(0 340) :font (shf:get-font :size 18) :color (shf:get-color cyan)))
@@ -450,4 +460,5 @@
 
 (defparameter colide-once nil)
 (defparameter delay 1)
+
 
