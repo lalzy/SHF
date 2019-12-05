@@ -1,6 +1,6 @@
 ;;;; sdl-helper-functions.asd
 
-(asdf:defsystem #:shf-test
+(asdf:defsystem #:shf-examples
   :description "Describe sdl-helper-functions here"
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
@@ -8,8 +8,8 @@
                #:lispbuilder-sdl
 	       #:sdl-helper-functions)
   :serial t
-  :components ((:module "shf-test"
+  :components ((:module "examples"
                 :components
 				((:file "package")
-                 (:file "shf-test")))))
+                 (:file "tetris")))))
 

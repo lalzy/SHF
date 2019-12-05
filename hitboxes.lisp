@@ -19,7 +19,7 @@
 (defun draw-hitboxes ()
   "Goes through the global variable *hitbox-draw-group*, 
 which is a list of hitboxes that shoyld be automatically drawn"
-  (when *debug-hitbox-draw* ; Checks if hitboxes are to be shown or not
+  ;(when *debug-hitbox-draw* ; Checks if hitboxes are to be shown or not
     (dolist (hitbox *hitbox-draw-group*)
       (let ((x (x hitbox))
 	    (y (y hitbox))
@@ -29,7 +29,7 @@ which is a list of hitboxes that shoyld be automatically drawn"
 	  (when (equalp (type-of hitbox) 'hitbox-rect)
 	    (sdl:draw-rectangle-* x y (w hitbox) (h hitbox) :color color))
 	  (when (equalp (type-of hitbox) 'hitbox-circle)
-	    (sdl:draw-circle-* x y (r hitbox) :color color)))))))
+	    (sdl:draw-circle-* x y (r hitbox) :color color))))));)
 
 
 (defun create-hitbox-position (type sprite x y )

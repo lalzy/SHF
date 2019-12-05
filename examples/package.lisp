@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:shf-test
+(defpackage #:shf-examples
   (:use #:cl)
-  (:export #:main #:main2 #:main3 #:main4 #:main5
-	   #:main6 #:main7 #:main8 #:main9 #:main10))
+  (:nicknames  #:shf-example #:shf-ex)
+  (:export #:tetris #:space-invaders))

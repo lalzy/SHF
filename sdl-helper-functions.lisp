@@ -19,6 +19,14 @@
 ;;;   
 ;;;   
 ;;; TODO:
+;;;  Draw different color on text 
+;;;   For more performance efficiency, loop through a string then
+;;;   subseq after reaching \#c[val]
+;;;   then make a list containing a list with  color and string
+;;;      Then loop through this new list 
+;;;       and draw the entire string in chosen color 
+;;;  This way, we only draw a bunch of individual strings
+;;; 
 ;;;   Rewrite the textfield\area scrolling system to not have a hitbox(on the scroll box\area),
 ;;;      and instead just use the box itself as mouse collision check(may have to create new method for collision check)
 ;;; 
@@ -56,6 +64,10 @@
 ;;;          position, instead of using 0
 ;;;
 ;;; ------ Performance concerns ------
+;;;  Multi-coloring in draw-text
+;;;    SDL is too expensive on drawing each individual character
+;;;    so it needs to be rewritten to use openGL
+;;; 
 ;;;  The Linewrapping function\system:
 ;;;     > It constantly does the calculation for each word, while it only draws what can be seen, the amount of words
 ;;;        can potentionally cause high performance loss.
@@ -114,7 +126,7 @@
 
 
 (defmacro main-loop ((&key width height (title "working title") (fps 60) icon fullscreen borderless position
-			   debug-mode capture-mouse (draw-sprites t) default-font (font-path #p"") assets-path
+			   debug-mode draw-hitboxes capture-mouse (draw-sprites t) default-font (font-path #p"") assets-path
 			   cursor (cursor-offset #(0 0)) sw hw (default-surface-drawing t))
 		     &rest body)
   "main loop macro for sdl, handling generic stuff, takes a list of keyword parameters followed by forms:
@@ -227,7 +239,9 @@ assets-path is not yet implemented!
 			   
 			   ;; Will draw sprites automatically(hitboxes if the global hitbox variable is set)
 			   (when (and ,draw-sprites (not (check-state :menu)))
-			     (draw-sprites)
+			     (draw-sprites))
+			   
+			   (when (and ,draw-hitboxes) (not (check-state :menu))
 			     (draw-hitboxes))
 
 

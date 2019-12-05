@@ -46,7 +46,6 @@
    #:add-state
    #:with-state
 
-   
    ;; Colors
    :*colors*
    #:get-color

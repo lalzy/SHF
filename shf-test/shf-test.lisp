@@ -3,14 +3,15 @@
 
 
 (in-package #:shf-test)
-
+;\\#c100255100!
 (defun main10 ()
-  "random test"
+  "Multi-color-text-test"
   (let ()
     (shf:main-loop
      (:font-path "c:/te/" :assets-path "c:/te" :width 500  :height 500)
      (:main
-      (shf:draw-text "hello!" #(0 0))))))
+      (shf:draw-text "hel\\#c100255100lo \\#c100100255the\\#c255100100re\\#c!" #(0 0))
+      ))))
 
 (defun main6 ()
   "cursor test"
@@ -131,9 +132,8 @@
 	(mouse-clicked nil)
 	(scroll-stop nil)
 	(init-string nil)
-	(string (vector "this is a very long line for the sake of line testing and stuff you know, justto make sure everything is on the up and up,  this is however the [end]" "and this is a seperate line" "so is this" "and this" "tdsd" "sad"  "asd" "dd" "asd" "asd" "dd" "asd" "asd" "dd" "asd" "asd" "the end"))
-
-	 ;;"hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the purpose of testing and stuff like that and such hello there this is a text string and stuff for the  this is the end")
+	(string "this is a slight long text, and stuff, anyway it is for the purpose of testing with line-wrapping, also multi coloring and scrolling! So from here on it'll be a bunch of random sequences! These will be blue: \\#c100100255 dasd asdf asdf sdafl skdfl ksdalf ksadlkf sadlf sadkjlj lsdakjf slkdfj laskdjf lkadjf lksdjf lksdjf lksadjfl ksadjfl ksajlkf jasdlkf jasdlk jlsakdjf lskadjf lksadjf lskadjf lksadjf lasdf \\#c These are back to default, now for red: \\#c255100100 asdjkfhksajdhf jksdahf kjsdhf kjsdahf jsadhf sadhf sadjkf hasdkjf hasdkfh sakdjhf ksadjhf kjsadhf kjsadhf hsadkjf hsadkjfh ksjdah fkjsadh fksjadh faksjdhf aksdhf kjs\\#c And default again before green: \\#c100255100 fsadfsadf sdaf asdf asdhjf gasdjhfg sahjgf jshdagf jhsdag fjhsadjfsdgf jshdagf jhsadgf jhsadgf jshdagf jhsdagf jhsdag fjhsdagf jsadgf jhadgf jhsdagf jhsdagf jhsadgjhsadg jhsdg jhsd gfjhsadg fjhsadgf jhsadgf jshadgfjhsadgf jsahdgf sjhda gfjashd fgjsahdfg ajshdfjsadghfjhsadg sjy")
+	
 	(text-field nil)
 	(scroll-bar nil)
 	(scroll-bar2 nil)
@@ -149,16 +149,17 @@
      (:title "tester"
      :width 800
      :height 500
+    ; :hw t
      :font-path "c:/te/"
      :fps 60)
      ;; Appends the init-form:
      (:quit(shf:empty-sprite-group))
      (:init (let ((tf-w 150)
 		  (tf-h 150)
-		  (tf-x 200)
+		  (tf-x 50)
 		  (tf-y 50)
 		  (font (shf:get-font :size 15)))
-	      ;(setf (values string lines height) (shf:line-wrapping string tf-w :font font))
+	      (setf (values string lines height) (shf:line-wrapping string tf-w :font font))
 	      (setf text-field (shf:create-text-field :x tf-x :y tf-y :w tf-w :h tf-h :font font :text string))
 	      (setf scroll-bar (shf:create-scroll-bar (+ tf-x tf-w) tf-y  5 tf-h :sb-h 31 :direction 'y :sb-hitbox-color (shf:get-color red) ))
 	      (setf scroll-bar2 (shf:create-scroll-bar tf-x (+ tf-y tf-h) tf-w 5 :sb-w 30 :direction :x :sb-hitbox-color (shf:get-color red)))))
@@ -169,8 +170,8 @@
        (shf:input-text-to-field text-field :multi-lines t))
      
       ;; Appends the main form \ gameplay-loop
-      (:main
-	(shf:draw-text (format nil "~a , ~a" (sdl:mouse-x) (sdl:mouse-y)) #(0 0))
+     (:main
+      (shf:draw-text (format nil "~a" (round (sdl:average-fps))) #(0 0))
 	(shf:draw-text (format nil "text-field is ~:[not active~;active~]" (shf:is-active? text-field)) #(0 20))
 
 	(shf:draw-scroll-bar scroll-bar)
@@ -197,9 +198,8 @@
 	(shf:text-scrolling text-field scroll-bar2 )
 
 	(shf:draw-text-field-with-text text-field :color (shf:get-color blue))
-	
+	(shf:draw-text (format nil "~a" (round (sdl:average-fps))) #(0 0) :default-color (shf:get-color white))
        ;(shf:draw-hitboxes)
-
       ))))
 
 
@@ -259,7 +259,6 @@
 					;(shf:init-music "c:/te/" :file-names '( "track3" ))
 					;(shf:init-music "C:/te/")
 					;(shf:init-music "C:/te/" :extention ".mp3")
-      
       
       (shf:empty-sprite-group)
       (setf box (shf:make-box-sprite 50 50 (shf:get-color darkgray) :x 140 :y 200))
@@ -328,6 +327,7 @@
 	(when (shf:edge-collision-check (first (shf:get-sprite-hitboxes box)) nil)
 	   (format t "jup!~%"))
        
+      (shf:draw-text (format nil "~a" (round (sdl:average-fps))) #(0 20))
      ; (shf:show-menu-text '("start" "options" "quit"))
 #||
        (let* ((text (shf:make-text-surface "testy test" :x 30 :y 150))
@@ -402,7 +402,7 @@
 	     (setf colide-once t)))
 	 
 	 (when  colide-once
-	   (shf:draw-text "Colided!!!!" #(460 30) :color (shf:get-color red)))
+	   (shf:draw-text "Colided!!!!" #(460 30) :default-color (shf:get-color red)))
 
 	 
       (when (shf:is-keys :sdl-key-O) (setf colide-once nil))
@@ -423,12 +423,12 @@
 	 (shf:draw-text (format nil "mouse pos = ~a, ~a" (sdl:mouse-x) (sdl:mouse-y)) #(150 0))
 	 
 	 (when (shf:mouse-collision-check h1)
-	   (shf:draw-text "Mouse Collision! with rectangle!" #(0 340) :font (shf:get-font :size 18) :color (shf:get-color cyan)))
+	   (shf:draw-text "Mouse Collision! with rectangle!" #(0 340) :font (shf:get-font :size 18) :default-color (shf:get-color cyan)))
 
      
 	 
       (when (shf:mouse-collision-check h2)
-	(shf:draw-text "Mouse Collision! with circle!" #(0 340) :font (shf:get-font :size 18) :color (shf:get-color cyan)))
+	(shf:draw-text "Mouse Collision! with circle!" #(0 340) :font (shf:get-font :size 18) :default-color (shf:get-color cyan)))
       
       (let* ((text "This text is mouse collision-based!")
 	     (x 0)
@@ -437,7 +437,7 @@
 	(shf:draw-text text (vector x y))
 	(when collision
 	  (shf:draw-text (format nil "text-collision! - name = [~a]" collision) #(0 340)
-			 :font (shf:get-font :size 18) :color (shf:get-color cyan))))
+			 :font (shf:get-font :size 18) :default-color (shf:get-color cyan))))
 
       (let* ((text "this text is too")
 	     (x 0)
@@ -446,7 +446,7 @@
 	(shf:draw-text text (vector x y) :font (shf:get-font :size 18))
 	(when collision
 	  (shf:draw-text (format nil "text-collision! - name [~a]" collision) #(0 340)
-			 :font (shf:get-font :size 18) :color (shf:get-color cyan))))
+			 :font (shf:get-font :size 18) :default-color (shf:get-color cyan))))
 
       (if (shf:check-key #\s)
 	  (shf:draw-text (format nil "s code!") #(400 0))

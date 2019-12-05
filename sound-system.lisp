@@ -32,6 +32,7 @@
 	(subseq sound 0 index))))
 
 (defun remove-path (file path)
+
   "removes the path from a file-name"
   (unless (stringp file)
     (setf file (format nil "~a" file)))
