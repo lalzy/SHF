@@ -144,6 +144,8 @@ so end position uses standard non-range collision"
 (defgeneric mouse-collision-check (object &optional mouse)
   (:documentation "Collision checking between object and the current position of the mouse"))
 
+(defmethod mouse-collision-check ((object sdl:surface) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y)))))
+
 (defmethod mouse-collision-check ((object vector) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (and (pixel-rect-collision-check (elt object 0) (elt object 1) (elt object 2) (elt object 3) (elt mouse 0) (elt mouse 1))))
 

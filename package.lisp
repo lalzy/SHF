@@ -46,6 +46,14 @@
    #:add-state
    #:with-state
 
+   ;;context-menu
+   #:initialize-context-menu
+   #:create-context-menu
+   #:set-select-color
+   #:set-text-color
+   #:select-context-item
+   #:draw-context-menu
+   
    ;; Colors
    :*colors*
    #:get-color

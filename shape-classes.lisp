@@ -4,8 +4,8 @@
 
 ;; Shapes
 (defclass pos ()
-  ((x :initarg :x :accessor x)
-   (y :initarg :y :accessor y))
+  ((x :initarg :x)
+   (y :initarg :y))
   (:documentation "Positions of an object, used as a super class for circle and rect"))
 
 (defclass circle (pos)
@@ -13,9 +13,70 @@
   (:documentation "A cirlce"))
 
 (defclass rect (pos)
-  ((w :initarg :w :accessor w)
-   (h :initarg :h :accessor h))
+  ((w :initarg :w )
+   (h :initarg :h ))
   (:documentation "A rectangle"))
+
+
+(defmethod x ((object rect) &optional arg)
+  (if arg
+      (incf (slot-value object 'x) arg)
+      (slot-value object 'x)))
+
+(defmethod x ((object vector) &optional arg)
+  (if arg
+      (incf (aref object 0) arg)
+      (aref object 0)))
+
+(defmethod x ((object sdl:surface) &optional arg)
+  (if arg
+      (incf (sdl:x object) arg)
+      (sdl:x object)))
+
+(defmethod y ((object rect) &optional arg)
+  (if arg
+      (incf (slot-value object 'y) arg)
+      (slot-value object 'y)))
+
+(defmethod y ((object vector) &optional arg)
+  (if arg
+      (incf (aref object 1) arg)
+      (aref object 1)))
+
+(defmethod y ((object sdl:surface) &optional arg)
+  (if arg
+      (incf (sdl:y object) arg)
+      (sdl:y object)))
+
+(defmethod w ((object rect) &optional arg)
+  (slot-value object 'w))
+
+(defmethod w ((object vector) &optional arg)
+  (if (= (length object) 2)
+      (aref object 0)
+      (aref object 2)))
+
+(defmethod w ((object sdl:surface) &optional arg)
+  (sdl:width object))
+
+(defmethod w ((object string) &optional (arg  sdl:*default-font*))
+  (sdl:get-font-size object :size :w :font arg))
+
+(defgeneric h (object &optional arg))
+
+(defmethod h ((object rect) &optional arg)
+  (slot-value object 'h))
+
+(defmethod h ((object vector) &optional arg)
+  (if (= (length object) 2)
+      (aref object 1)
+      (aref object 3)))
+
+(defmethod h ((object sdl:surface) &optional arg)
+  (sdl:height object))
+
+(defmethod h ((object string) &optional (arg sdl:*default-font*))
+  (sdl:get-font-size object :size :h :font arg))
 
 ;; Change to use a generic package instead
 (defun clone-sprite (object &aux (copy (allocate-instance (class-of object))))

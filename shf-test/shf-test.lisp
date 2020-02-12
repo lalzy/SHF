@@ -13,6 +13,36 @@
       (shf:draw-text "hel\\#c100255100lo \\#c100100255the\\#c255100100re\\#c!" #(0 0))
       ))))
 
+
+(defun testing (box)
+  (setf (sdl:x box) 150)
+  (sdl:draw-surface-at-* box (sdl:x box) (sdl:y box))
+  ;(format t "~a~%" (sdl:x box))
+  )
+(defun main9 ()
+  (let (box)
+    (shf:main-loop
+     (:width 500 :height 500 :font-path "C:/te/")
+     (:init (setf box (sdl:create-surface 50 50))
+	    (sdl:draw-box-* 0 0 50 50 :color (shf:get-color green) :surface box))
+     (:main
+      (testing box)))))
+
+(defun main7 ()
+  (let ((clicked nil))
+    (shf:main-loop
+     (:width 500 :height 500 :font-path "C:/te/")
+     (:init (shf::initialize-context-menu))
+     (:mouse-down
+      (if (shf:check-state 'context-menu) 
+	  (shf:with-state 'context-menu (shf::select-context-item))
+	  (shf::create-context-menu '("one" "two" "three") :spacing 5))
+      (setf clicked t))
+     (:main
+      (shf:with-state 'context-menu
+	(shf::draw-context-menu (shf:get-color yellow)) 
+	(when clicked (setf clicked nil)))))))
+
 (defun main6 ()
   "cursor test"
   (let ()

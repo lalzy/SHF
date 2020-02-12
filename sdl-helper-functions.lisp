@@ -129,7 +129,8 @@
 			   debug-mode draw-hitboxes capture-mouse (draw-sprites t) default-font (font-path #p"") assets-path
 			   cursor (cursor-offset #(0 0)) sw hw (default-surface-drawing t))
 		     &rest body)
-  "main loop macro for sdl, handling generic stuff, takes a list of keyword parameters followed by forms:
+  "main loop macro for sdl, handling g
+eneric stuff, takes a list of keyword parameters followed by forms:
 :pre-init - initialization before sdl is called
 :init - initialization after sdl is started and a window has been initialized and started
 :quit - The exit event of sdl.
