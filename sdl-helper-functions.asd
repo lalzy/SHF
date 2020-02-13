@@ -49,8 +49,10 @@
 	       (:file "text-input") ; Input into textfield
 
 	       (:file "context-menu")
+	       (:file "element-positioning")
+
+	       
 	       ;; Main
 	       (:file "states")
-	       
                (:file "sdl-helper-functions")))
 

@@ -53,6 +53,9 @@
    #:set-text-color
    #:select-context-item
    #:draw-context-menu
+   #:clear-context-menu
+   #:key-select-context-item
+   #:set-browse-keys
    
    ;; Colors
    :*colors*

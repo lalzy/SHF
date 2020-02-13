@@ -29,18 +29,32 @@
       (testing box)))))
 
 (defun main7 ()
-  (let ((clicked nil))
+  (let ((clicked nil) (pressed nil))
     (shf:main-loop
      (:width 500 :height 500 :font-path "C:/te/")
-     (:init (shf::initialize-context-menu))
+     (:init (shf:initialize-context-menu)
+	    (shf:set-browse-keys :SDL-KEY-DOWN :SDL-KEY-UP :SDL-KEY-RETURN :SDL-KEY-ESCAPE))
+     (:key-down (when (shf:is-keys :SDL-KEY-SPACE)
+		  (shf:create-context-menu '("one" "two" "three") :x 400 :y 400))
+		(shf:with-state :context-menu
+		  (setf pressed (shf:key-select-context-item))))
      (:mouse-down
-      (if (shf:check-state 'context-menu) 
-	  (shf:with-state 'context-menu (shf::select-context-item))
-	  (shf::create-context-menu '("one" "two" "three") :spacing 5))
+      (shf:with-state :context-menu
+	(setf pressed (shf::mouse-select-context-item)))
+      (when (shf:is-mouse-key :right)
+	(shf:create-context-menu '("One" "Two" "three")))
+      #||
+      (if (shf:check-state :context-menu)
+	  (shf:clear-context-menu)
+	  (shf::create-context-menu '("one" "two" "three") :spacing 5))||#
       (setf clicked t))
      (:main
-      (shf:with-state 'context-menu
-	(shf::draw-context-menu (shf:get-color yellow)) 
+      (shf:draw-text (shf::strarg "current-state: ~a" shf::*STATE*) #(0 0))
+      (shf:draw-text (shf::strarg "last-clicked: ~a" pressed) #(0 20))
+	(shf:draw-text (shf::strarg "state = ~a" shf::*state*) #(0 40))
+      (shf:with-state :context-menu
+	(shf::run-context-menu)
+	(shf:draw-text (shf::strarg "mouse = ~a" shf:*mouse-move-direction*) #(0 60))
 	(when clicked (setf clicked nil)))))))
 
 (defun main6 ()

@@ -1,70 +1,91 @@
 (in-package :sdl-helper-functions)
 
-(defun get-font-sizes (text &optional (font sdl:*default-font*))
-  (values (sdl:get-font-size text :size :w :font font) (sdl:get-font-size text :size :h :font font)))
-
-(defun initialize-context-menu (&optional menu-offset-x menu-offset-y)
+(defun initialize-context-menu ()
   ;; Create context-menu state here!
-  (add-state 'context-menu)
-  (let (menu-items menu-position previous-state select-box background (text-color (shf:get-color black)) (select-color (shf:get-color lightgray)))
+  (add-state :context-menu)
+  (let (menu-items previous-state key-mode (browse-keys (make-hash-table :size 4)) (selection-index 0) (item-amount 0))
     
     (defun create-background-box (width height)
       (let ((surface (sdl:create-surface width height)))
 	(sdl:draw-box-* 0 0 width height :surface surface :color (get-color lightgray))
 	surface))
     
-    (defun set-text-color (color) (setf text-color color))
-    (defun set-select-color (color) (setf select-color color))
-    
-    (defun create-context-menu (items-list &key  (offset-x 0) (offset-y 0) (x (sdl:mouse-x)) (y (sdl:mouse-y)) (spacing 0) (font sdl:*default-font*) background-image foreground-image)
-      ;; Set position of the menu
-      ;; Set state to context-menu
-      ;; Create position of individual elements?
-      ;;   vector> x y w h
-      (incf x offset-x) (incf y offset-y)
-      (setf previous-state *state*)
-      (set-state 'context-menu)
-      (let ((total-height offset-y)
-	    (max-width 0))
-	(setf menu-position (vector x y))
-	(dolist (item items-list)
-	  (multiple-value-bind (width height) (get-font-sizes item font)
-	    (push (vector item (vector x y width (1- (+ height spacing)))) menu-items)
-	    (incf y (+ spacing height))
-	    (incf total-height (+ spacing height))
-	    (when (> width max-width) (setf max-width width))))
+    (defun clear-context-menu ()
+      (set-state previous-state)
+      (setf menu-items nil))
 
-	(setf background
-	      (if background-image
-		  background-image
-		  (create-background-box max-width total-height)))))
+    (defun set-browse-keys (down up select cancel)
+      (setf (gethash :down browse-keys) down
+	    (gethash :up browse-keys) up
+	    (gethash :select browse-keys) select
+	    (gethash :cancel browse-keys) cancel
+	    key-mode t))
     
-    (defun select-context-item ()
-      (setf menu-items nil)
-      (set-state previous-state))
+    (defun create-context-menu (string-list &key (spacing 0) (x (sdl:mouse-x)) (y (sdl:mouse-y)) (font sdl:*default-font*))
+      (unless (string= *state* :context-menu)
+	(setf previous-state *state*))
+      (set-state :context-menu)
+      (dolist (string string-list)
+	(incf item-amount)
+	(push (vector string
+		      (vector x y (w string font) (h string font))) menu-items)
+	(incf y (+ spacing (h string font))))
+      (if key-mode
+	  (setf selection-index (1- item-amount))
+	  (setf selection-index -1)))
     
-    (defun draw-context-menu (&optional selection-box-color)
-      ;(break (format nil "~a" background))
-      (sdl:draw-surface-at background menu-position)
+    (defun move-index (check-function check-value reset amount)
+      (if (funcall check-function selection-index check-value)
+	  (setf selection-index reset)
+	  (setf selection-index (+ selection-index amount))))
+
+    (defun 1a (array)
+      (aref array 0))
+    
+    (defun 2a (array)
+      (aref array 1))
+
+    (defun mouse-check ()
       (dolist (item menu-items)
-	(let ((color (if (mouse-collision-check (aref item 1))
-			 (progn
-			   (when selection-box-color
-			     (sdl:draw-box-* (x (aref item 1)) (y (aref item 1)) (w background) (h (aref item 1)) :color selection-box-color) (aref item 1))
-			   (get-color blue))
-			 (get-color black))))
-	(shf:draw-text (format nil "~a" (aref item 0)) (aref item 1) :default-color color))))))
+	(when (mouse-collision-check (2a item)) (return-from mouse-check (1a item))))
+      nil)
+
+    (defun mouse-select-context-item (&key (select-keys '(:left)) (cancel-keys '(:right)))
+      (cond ((is-mouse-keys cancel-keys)
+	     (clear-menu))
+	    ((is-mouse-keys select-keys)
+	       (clear-menu (mouse-check)))))
+
+    (defun clear-menu (&optional item)
+      (setf menu-items nil
+	    selection-index 0
+	    item-amount 0
+	    *state* previous-state)
+      (when item item))
+    
+    (defun key-select-context-item (&aux (key (shf:get-pressed-key)))
+      (cond ((string= (gethash :cancel browse-keys) key)
+	     (clear-menu))
+	    ((string= key (gethash :up browse-keys))
+	     (move-index #'= (1- item-amount) 0 1)
+	     nil)
+	    ((string= key (gethash :down browse-keys))
+	     (move-index #'= 0 (1- item-amount) -1)
+	     nil)
+	    ((string= key (gethash :select browse-keys))
+	     (clear-menu (1a (nth selection-index menu-items))))))
+	    
 
 
-
-
-
-#|
-  when rightclick call create-context-menu.
-     > set menu at mouse-position
-     > loop through and position each element subsequently from options-list
-
-   create-menu
-   
-
-|#
+    (defun run-context-menu (&optional (mouse-on t))
+      (let ((index 0))
+	(dolist (item menu-items)
+	  ;; Change selection if mouse move and mouse is on
+	  (when (and mouse-on (mouse-moved) (mouse-collision-check (2a item))) (setf selection-index index))
+	  (draw-context-menu item index)
+	  (incf index))))
+    
+    (defun draw-context-menu (item index)
+      (if (= index selection-index)
+	  (shf:draw-text (1a item) (2a item) :default-color (shf:get-color blue))
+	  (shf:draw-text (1a item) (2a item))))))

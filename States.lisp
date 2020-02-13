@@ -8,13 +8,12 @@
 (defun set-state (state)
   "Sets the game state"
   (if (member state *states*)
-      (setf *state* state)))
-
+(setf *state* state)))
 (defun check-state (state)
   (string= state *state*))
 
 (defmacro with-state (state &body body)
-  `(when (string= ,state *state*)
+  `(when (string= ',state *state*)
      ,@body))
 
 (defun add-state (&rest states)

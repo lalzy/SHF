@@ -36,6 +36,9 @@
 	(when (is-mouse-key key) (return t)))
       (is-mouse-key keys)))
 
+(defun mouse-moved ()
+  (every #'(lambda (x) (not (string= x 'none))) *mouse-move-direction*))
+
 ;Rename to key a
 (defun is-keys (&rest keys)
   "Take a list of keys and return true if any one of them has been pressed"
