@@ -56,6 +56,8 @@
    #:clear-context-menu
    #:key-select-context-item
    #:set-browse-keys
+
+   #:build-context-background
    
    ;; Colors
    :*colors*

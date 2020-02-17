@@ -165,7 +165,7 @@ eneric stuff, takes a list of keyword parameters followed by forms:
 )
     
     (alexandria:with-gensyms (previous-mouse-x previous-mouse-y position-variable)
-      `(let (,previous-mouse-x ,previous-mouse-y ,position-variable)
+      `(let ((,previous-mouse-x 0) (,previous-mouse-y 0) ,position-variable)
 	 ,@pre-window-form
 
 	 

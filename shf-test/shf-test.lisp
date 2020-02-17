@@ -35,14 +35,20 @@
      (:init (shf:initialize-context-menu)
 	    (shf:set-browse-keys :SDL-KEY-DOWN :SDL-KEY-UP :SDL-KEY-RETURN :SDL-KEY-ESCAPE))
      (:key-down (when (shf:is-keys :SDL-KEY-SPACE)
-		  (shf:create-context-menu '("one" "two" "three") :x 400 :y 400))
+		  (shf:create-context-menu '("one" "two" "three" "four" "five" "six" "seven" "height" "nine" "ten") :x 300 :y 200))
 		(shf:with-state :context-menu
 		  (setf pressed (shf:key-select-context-item))))
      (:mouse-down
       (shf:with-state :context-menu
 	(setf pressed (shf::mouse-select-context-item)))
       (when (shf:is-mouse-key :right)
-	(shf:create-context-menu '("One" "Two" "three")))
+;	(shf:create-context-menu '("One" "Two" "three" "four" "five"))
+	(shf:create-context-menu '("One" "Two" "three" "four" "five" "six" "7"))
+	(shf:build-context-background (shf:make-image "background.png" :path "c:/te/images/")
+				     :vertical-image (shf:make-image "side.png" :path "c:/te/images/") :color-key-pos #(0 0)
+				     :horizontal-image (shf:make-image "side.png" :path "c:/te/images/")
+				      :corner-image (shf:make-image "corners.png" :path "c:/te/images/")
+				      ))
       #||
       (if (shf:check-state :context-menu)
 	  (shf:clear-context-menu)

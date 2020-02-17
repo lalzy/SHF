@@ -3,7 +3,7 @@
 (defun last-index (sequence)
   (1- (length sequence)))
 
-(defun create-adj-ystring (&optional text)
+(defun create-adj-string (&optional text)
   "Create an adjustable string"
   (make-array (if text (length text) 0) :element-type 'character :adjustable t
 	      :fill-pointer (if text (length text) 0)

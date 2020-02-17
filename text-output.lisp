@@ -42,13 +42,10 @@ New list:
 	     :g (parse-integer (subseq string 3 6))
 	     :b (parse-integer (subseq string 6 9))))
 
-(defun new-empty-string ()
-  (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t))
-
 (defun filter-out-colors (string &optional default-color)
   ""
   (let ((return-sequence (make-array 1 :adjustable t :fill-pointer 0))
-	(current-string (new-empty-string))
+	(current-string (create-adj-string))
 	(color default-color))
     (iter (for i to (last-index string))
 	  (finally (vector-push-extend
@@ -61,14 +58,14 @@ New list:
 			 (vector-push-extend
 			  (vector current-string color )
 					     return-sequence)
-			 (setf current-string (new-empty-string)))
+			 (setf current-string (create-adj-string)))
 			(setf color (filter-color (subseq string (1+ i) (incf i 10)))))
 		      (t (incf i)
 			 (unless (= (length current-string) 0)
 			   (vector-push-extend
 			    (vector current-string color )
 					       return-sequence)
-			   (setf current-string (new-empty-string)))
+			   (setf current-string (create-adj-string)))
 		       (setf color default-color)))
 		(decf i 2)))
 
@@ -98,6 +95,27 @@ New list:
   ;;(draw-string string (aref point 0) (aref point 1) default-color font type surface bg-color))
 
 )
+
+
+(defmacro new-draw-text (point string &key args (type :solid) (bg-color (shf:get-color yellow))
+				 (default-color (get-color white)) (font sdl:*default-font*)
+				 (surface sdl:*default-surface*))
+  "Colors are defined as RGB values after \#c, so \#c255000255 would be --"
+  (iter (for s :in-sequence (filter-out-colors `(format nil ,string ,args) default-color))
+	(with font-size)
+	(with string-to-draw)
+	(with x = (aref point 0))
+	(setf string-to-draw (aref s 0))
+	
+	(setf font-size (sdl:get-font-size (aref s 0) :size :w :font font))
+	(when (> (length string-to-draw) 0)
+	  (draw-string string-to-draw x (aref point 1) (aref s 1) font type surface))
+	(incf x font-size))
+
+  ;;(draw-string string (aref point 0) (aref point 1) default-color font type surface bg-color))
+
+)
+
 
 (defun draw-text-with-lines (strings surface &key (font sdl:*default-font*)
 					     (color (get-color white))
