@@ -13,6 +13,7 @@
 	       #:alexandria
 	       #:closer-mop
 	       #:uiop
+	       ;;#:cl-store
 	       #:cl-utilities
                #:bt-semaphore
 	       #:cl-unicode
@@ -20,7 +21,8 @@
                #:lispbuilder-sdl-mixer
                #:lispbuilder-sdl-ttf
                #:lispbuilder-sdl-image
-               #:lispbuilder-sdl-gfx)
+               #:lispbuilder-sdl-gfx
+	       )
   :serial t
   :components ((:file "package")
 	       
@@ -33,7 +35,6 @@
 	       
 	       ;; Image\Sprites
 	       (:file "images")
-	       (:file "sprites")
 
 	       ;; Collision\Physics
 	       (:file "collision-checks")

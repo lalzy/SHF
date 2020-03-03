@@ -2,13 +2,14 @@
 
 (defparameter *colors* `((white ,(sdl:color :r 255 :g 255 :b 255))
 			 (black ,(sdl:color :r 0 :g 0 :b 0))
-			 (darkgray ,(sdl:color :r 50 :g 50 :b 50))
+			 (dark-gray ,(sdl:color :r 50 :g 50 :b 50))
 			 (gray ,(sdl:color :r 160 :g 160 :b  160))
-			 (lightgray ,(sdl:color :r 211 :g 211 :b 211))
+			 (light-gray ,(sdl:color :r 211 :g 211 :b 211))
 			 (green ,(sdl:color :r 0 :g 255 :b 0))
 			 (red ,(sdl:color :r 255 :g 0 :b 0))
 			 (blue ,(sdl:color :r 0 :g 0 :b 255))
 			 (cyan ,(sdl:color :r 0 :g 255 :b 255))
+			 (orange ,(sdl:color :r 255 :g 165  :b 0))
 			 (yellow ,(sdl:color :r 255 :g 255 :b 0))))
 
 (defmacro add-color (color &key (r 0) (g 0) (b 0))

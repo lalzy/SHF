@@ -84,7 +84,7 @@
 	     (clear-context-menu (1a (nth selection-index menu-items))))))
 	    
 
-    (defun create-color-box (&optional (color (get-color lightgray)) (extra-width 0) (extra-height 0))
+    (defun create-color-box (&optional (color (get-color light-gray)) (extra-width 0) (extra-height 0))
       (let ((surface (sdl:create-surface (+ width extra-width) (+ height extra-height))))
 	(sdl:draw-box-* 0 0 (+ width extra-width) (+ height extra-height) :color color :surface surface)
 	surface))
@@ -96,7 +96,7 @@
 			       (mouse-on t))
 
 
-      (shf:draw-text (strarg "size = ~a" *temporary*) #(0 120))
+     ; (shf:draw-text (strarg "size = ~a" *temporary*) #(0 120))
       
       ;; Add check if colliding with menu as well.
       (when (and mouse-on (mouse-moved)) (setf selection-index -1))
@@ -109,11 +109,11 @@
     
     (defun draw-context-menu-item (item index text-color select-text-color)
       (cond ((= index selection-index)
-	     (shf:draw-text (1a item) (2a item) :default-color select-text-color))
+	     (shf:draw-text (2a item) (1a item) :default-color select-text-color))
 	    ((and (mouse-collision-check (2a item)) (= selection-index -1))
-	     (shf:draw-text (1a item) (2a item) :default-color select-text-color))
+	     (shf:draw-text (2a item) (1a item) :default-color select-text-color))
 	    (t
-	     (shf:draw-text (1a item) (2a item) :default-color text-color))))
+	     (shf:draw-text (2a item) (1a item) :default-color text-color))))
 
 
     (defun draw-context-background ()

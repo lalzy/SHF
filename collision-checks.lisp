@@ -16,52 +16,62 @@
 Optionally if old-pos(a position vector) is set will do a range collision check, rather than onpoint"))
 
 (defmethod collision-check (object1 object2 &optional old-obj)
-  (get-collision object1 object2 old-obj))
+  nil)
+
+;; Change to check if old-obj is rect
+(defmethod collision-check ((object1 rect) (object2 rect) &optional old-obj);((object1 hitbox-rect) (object2 hitbox-rect))
+  (if (typep old-obj 'rect) ; Ensures old-object is same as object1
+      (rect-collision-check (get-range old-obj object1) object2)
+      (rect-collision-check object1 object2)))
+
+;; Change to check if old-obj is rect
+(defmethod collision-check ((object1 sdl:surface) (object2 rect) &optional old-obj);((object1 hitbox-rect) (object2 hitbox-rect))
+  (if (typep old-obj 'rect) ; Ensures old-object is same as object1
+      (rect-collision-check (get-range old-obj object1) object2)
+      (rect-collision-check object1 object2)))
+
+;; Change to check if old-obj is rect
+(defmethod collision-check ((object1 sdl:surface) (object2 sdl:surface) &optional old-obj);((object1 hitbox-rect) (object2 hitbox-rect))
+  (if (typep old-obj 'rect) ; Ensures old-object is same as object1
+      (rect-collision-check (get-range old-obj object1) object2)
+      (rect-collision-check object1 object2)))
+
+(defmethod collision-check ((object1 rect) (object2 circle) &optional old-obj);((object1 hitbox-rect) (object2 hitbox-circle))
+  (if (typep old-obj 'rect)
+      (rect-circle-collision-check (get-range old-obj object1) object2)
+      (rect-circle-collision-check object1 object2)))
+
+(defmethod collision-check ((object1 sdl:surface) (object2 circle) &optional old-obj);((object1 hitbox-rect) (object2 hitbox-circle))
+  (if (typep old-obj 'rect)
+      (rect-circle-collision-check (get-range old-obj object1) object2)
+      (rect-circle-collision-check object1 object2)))
+
+(defmethod collision-check ((object1 circle) (object2 rect) &optional old-obj);((object1 hitbox-circle) (object2 hitbox-rect))
+  (if (typep old-obj 'circle) ; Ensures old-object is same as object1
+
+      ;; If object1 and old-object are in the same position, do circle collision, if not do range collision.
+      (if (object-same-pos-p object1 old-obj)
+	  (rect-circle-collision-check object2 object1)
+	  (rect-collision-check (get-range old-obj object1) object2))
+      (rect-circle-collision-check object2 object1)))
+
+(defmethod collision-check ((object1 circle) (object2 sdl:surface) &optional old-obj);((object1 hitbox-circle) (object2 hitbox-rect))
+  (if (typep old-obj 'circle) ; Ensures old-object is same as object1
+
+      ;; If object1 and old-object are in the same position, do circle collision, if not do range collision.
+      (if (object-same-pos-p object1 old-obj)
+	  (rect-circle-collision-check object2 object1)
+	  (rect-collision-check (get-range old-obj object1) object2))
+      (rect-circle-collision-check object2 object1)))
+
+(defmethod collision-check ((object1 circle) (object2 circle) &optional old-obj);((object1 hitbox-circle) (object2 hitbox-circle))
+  (if (typep old-obj 'rect)
+      (if (object-same-pos-p object1 old-obj) 
+	  (circle-collision-check object1 object2)
+	  (rect-circle-collision-check (get-range old-obj object1) object2))
+      (circle-collision-check object1 object2)))
 
 
-(defmethod collision-check ((object1 sprite-class) (object2 sprite-class) &optional old-obj)
-  (let ((col nil)
-	(h1 nil)
-	(h2 nil))
-    (loop-hitbox object1 h1
-	 (loop-hitbox object2 h2
-	      ;; If the old-object is a sprite, loop through all of it's hitboxes as well
-	      (if (typep old-obj 'sprite-class)
-		  (let ((h3 nil))
-		    (loop-hitbox old-obj h3
-			 (let ((res (get-collision h1 h2 h3)))
-			   (when res (push res col)))))
-		  (let ((res (get-collision h1 h2 old-obj)))
-		    (when res (push res col))))))
-    col))
-
-
-(defmethod collision-check ((object1 sprite-class) object2 &optional old-obj)
-  (let ((col nil)
-	(h1 nil))
-    (loop-hitbox object1 h1
-	 
-	 (if (typep old-obj 'sprite-class)
-	     (let ((h2 nil))
-	       (loop-hitbox old-obj h2
-		    (let ((res (get-collision h1 object2 h2)))
-		      (when res (push res col)))))
-	     (let ((res (get-collision h1 object2 old-obj)))
-	       (when res
-		 (push res col)))))
-    col))
-
-(defmethod collision-check (object1 (object2 sprite-class) &optional old-obj)
-  (let ((col nil)
-	(h2 nil))
-    (loop-hitbox object2 h2
-	 (let ((res (get-collision object1 h2 old-obj)))
-	   (when res
-	     (push res col))))
-    col))
-
-
-(defmethod get-range (old-obj object &aux sx sy ex ey))
 
 (defun get-range-positions (old-obj object &aux sx ex sy ey)
   "Get the starting and ending position between the old and new object"
@@ -78,21 +88,26 @@ Optionally if old-pos(a position vector) is set will do a range collision check,
 	ey (- ey sy))
   (list sx sy ex ey))
   
+(defmethod get-range (old-obj object &aux sx sy ex ey))
+
 (defmethod get-range ((old-obj circle) (object circle) &aux (pos (get-range-positions old-obj object)))
   "Get the start and end position(size) of the range, only registers about half of the circle,
 so end position uses standard non-range collision"
-  (make-instance 'rect :x (elt pos 0) :y  (elt pos 1)
+  (make-instance 'sdl:rectangle :x (elt pos 0) :y  (elt pos 1)
  ; (make-instance 'rect :x (- (elt pos 0) (r object)) :y (- (elt pos 1) (r object))
 		 :w (+ (elt pos 2) (r object)) :h (+ (elt pos 3)  (r object)))) 
 	;	 :w (+ (elt pos 2) (* 2 (r object))) :h (+ (elt pos 3) (* 2 (r object)))))
-	  
-(defmethod get-range ((old-obj rect) (object rect) &aux (pos (get-range-positions old-obj object)))
+
+;make generic documented
+(defmethod get-range ((old-obj rect) (object rect)) (get-range-rect-helper old-obj object))
+(defmethod get-range ((old-obj sdl:surface) (object sdl:surface)) (get-range-rect-helper old-obj object))
+(defmethod get-range ((old-obj sdl:surface) (object rect)) (get-range-rect-helper old-obj object))
+(defmethod get-range ((old-obj rect) (object sdl:surface)) (get-range-rect-helper old-obj object))
+(defun get-range-rect-helper ((old-obj rect) (object sdl:rectangle) &aux (pos (get-range-positions old-obj object)))
   "Get the start and end position(size) of the range"
-  (make-instance 'rect :x (elt pos 0) :y (elt pos 1)
+  (make-instance 'sdl:rectangle :x (elt pos 0) :y (elt pos 1)
 		 :w (+ (w object) (elt pos 2)) :h (+ (h object) (elt pos 3))))
 
-
-(defmethod get-collision (object1 object2 old-obj)) ;; Does nothing
 
 (defun object-same-pos-p (object1 object2)
   "Checks if object1 and object2 are at the same position, a.k.a, not moved"
@@ -100,85 +115,39 @@ so end position uses standard non-range collision"
       t
       nil))
 
-(defgeneric get-collision (object1 object2 old-obj)
-  (:documentation "Ensures the correct collision form is done depending on what type of object is passed(rectangle or Circle)"))
-
-;; Change to check if old-obj is rect
-(defmethod get-collision ((object1 rect) (object2 rect) old-obj);((object1 hitbox-rect) (object2 hitbox-rect))
-  (if (typep old-obj 'rect) ; Ensures old-object is same as object1
-      (rect-collision-check (get-range old-obj object1) object2)
-      (rect-collision-check object1 object2)))
-
-(defmethod get-collision ((object1 rect) (object2 circle) old-obj);((object1 hitbox-rect) (object2 hitbox-circle))
-  (if (typep old-obj 'rect)
-      (rect-circle-collision-check (get-range old-obj object1) object2)
-      (rect-circle-collision-check object1 object2)))
-
-(defmethod get-collision ((object1 circle) (object2 rect) old-obj);((object1 hitbox-circle) (object2 hitbox-rect))
-  (if (typep old-obj 'circle) ; Ensures old-object is same as object1
-
-      ;; If object1 and old-object are in the same position, do circle collision, if not do range collision.
-      (if (object-same-pos-p object1 old-obj)
-	  (rect-circle-collision-check object2 object1)
-	  (rect-collision-check (get-range old-obj object1) object2))
-      (rect-circle-collision-check object2 object1)))
-
-
-(defmethod get-collision ((object1 circle) (object2 circle) old-obj);((object1 hitbox-circle) (object2 hitbox-circle))
-  (if (typep old-obj 'rect)
-      (if (object-same-pos-p object1 old-obj) 
-	  (circle-collision-check object1 object2)
-	  (rect-circle-collision-check (get-range old-obj object1) object2))
-      (circle-collision-check object1 object2)))
-
-
-(defun get-collision-hitbox-name (name-check list)
-  "Get the selected hitbox by name if it exists inside the list of hitbox collisions"
-  (block function
-    (let ((names nil))
-      (dolist (obj-list list)
-	(dolist (obj obj-list)
-	  (when (equalp name-check (shf:get-hitbox-name obj))
-	    (return-from function name-check)))))))
 
 (defgeneric mouse-collision-check (object &optional mouse)
   (:documentation "Collision checking between object and the current position of the mouse"))
 
-(defmethod mouse-collision-check ((object sdl:surface) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y)))))
+(defmethod mouse-collision-check ((object rect) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
+  (and (pixel-rect-collision-check (x object) (y object) (w object) (h object) (aref mouse 0) (aref mouse 1))))
+
+(defmethod mouse-collision-check ((object sdl:surface) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
+  (and (pixel-rect-collision-check (x object) (y object) (w object) (h object) (aref mouse 0) (aref mouse 1))))
 
 (defmethod mouse-collision-check ((object vector) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
-  (and (pixel-rect-collision-check (elt object 0) (elt object 1) (elt object 2) (elt object 3) (elt mouse 0) (elt mouse 1))))
+  (and (pixel-rect-collision-check (aref object 0) (aref object 1) (aref object 2) (aref object 3) (elt mouse 0) (elt mouse 1))))
 
-(defmethod mouse-collision-check ((object sprite-class) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
-  (let ((col nil)
-	(hitbox nil))
-    (loop-hitbox object hitbox ; Loop through and do collision check on the individual hitboxes of the sprite
-	 (let ((res nil))
-	   (if (string= (type-of hitbox) 'hitbox-rect)
-	       (setf res (pixel-rect-collision-check (x hitbox) (y hitbox) (w hitbox)
-						     (h hitbox) (elt mouse 0) (elt mouse 1)))
-	       (setf res (pixel-circle-collision-check (x hitbox) (y hitbox) (r hitbox)
-					     (elt mouse 0) (elt mouse 1))))
-		 (when res
-		   (push hitbox col))))
-    (list col)))
 
 (defmethod mouse-collision-check ((object circle) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (if (pixel-circle-collision-check (x object) (y object) (r object) (elt mouse 0) (elt mouse 1))
       object
       nil))
-
+#||
 (defmethod mouse-collision-check ((object rect) &optional (mouse (vector (sdl:mouse-x) (sdl:mouse-y))))
   (if (pixel-rect-collision-check (x object) (y object) (w object) (h object) (elt mouse 0) (elt mouse 1))
       object
       nil))
+||#
 
 (defun mouse-text-collision (text x y  &key (mouse-x (sdl:mouse-x)) (mouse-y (sdl:mouse-y)) (font sdl:*default-font*) (name text))
   ""
   (if (pixel-rect-collision-check
        x y
-       (sdl:get-font-size text :size :w :font font)
-       (sdl:get-font-size text :size :h :font font)
+       (w text font)
+       (h text font)
+       ;(sdl:get-font-size text :size :w :font font)
+       ;(sdl:get-font-size text :size :h :font font)
        mouse-x mouse-y)
       name
       nil))
@@ -244,7 +213,7 @@ if beyond is set it'll only colide if the object is past the window"))
   "No collision if not of a valid shape"
   nil)
 
-(defmethod edge-collision-check ((object rect) &optional (beyond nil))
+(defmethod edge-collision-check ((object sdl:rectangle) &optional (beyond nil))
   "Edge collision for a rectangle instance"
   (edge-rect-collision object beyond))
 

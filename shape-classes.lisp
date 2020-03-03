@@ -2,7 +2,7 @@
 
 (in-package #:sdl-helper-functions)
 
-;; Shapes
+;; Sdl does not have a cricle class
 (defclass pos ()
   ((x :initarg :x)
    (y :initarg :y))
@@ -12,12 +12,18 @@
   ((radius :initarg :r :accessor r :documentation "The circle's radius"))
   (:documentation "A cirlce"))
 
+;; SDL Rect is not an class, instead an foreign emu, therefore recreating a seperate rectangle here.
 (defclass rect (pos)
   ((w :initarg :w )
    (h :initarg :h ))
   (:documentation "A rectangle"))
 
-
+#||
+(defmethod x ((object circle) &optional arg)
+  (if arg
+      (incf (slot-value object 'x-position) arg)
+      (slot-value object 'x-position)))
+||#
 (defmethod x ((object rect) &optional arg)
   (if arg
       (incf (slot-value object 'x) arg)
@@ -32,6 +38,9 @@
   (if arg
       (incf (sdl:x object) arg)
       (sdl:x object)))
+
+(defmethod x ((object string) &optional arg)
+  (sdl:x object))
 
 (defmethod y ((object rect) &optional arg)
   (if arg
@@ -48,8 +57,13 @@
       (incf (sdl:y object) arg)
       (sdl:y object)))
 
+
+(defmethod y ((object string) &optional arg)
+  (sdl:y object))
+
 (defmethod w ((object rect) &optional arg)
   (slot-value object 'w))
+
 
 (defmethod w ((object vector) &optional arg)
   (if (= (length object) 2)
@@ -61,6 +75,8 @@
 
 (defmethod w ((object string) &optional (arg  sdl:*default-font*))
   (sdl:get-font-size object :size :w :font arg))
+
+
 
 (defgeneric h (object &optional arg))
 
