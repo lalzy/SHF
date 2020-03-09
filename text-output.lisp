@@ -167,6 +167,7 @@ text = (
 (defun line-wrapping (text boundry &key (font sdl:*default-font*) (start-pos 0))
   (line-wrap-calc (filter-out-options text) boundry font start-pos))
 
+#||
 (defun line-wrap-calc (texts boundry font start-pos)
   "Seperate a list of words into lines of words based on maximum line-length allowed to be drawn(for use with draw-lines function)"
   (let ((x start-pos)
@@ -187,6 +188,48 @@ text = (
 	;; When beyond boundry, add sentence to the line with option.
 	(when (> x boundry)
 
+	  ;; Make it move the out-of-bounds word to next line
+	  (push-last (list sentence options) current-line)
+	  (push-last current-line output)
+	  (setf current-line nil 
+		sentence ""
+		x start-pos)))
+
+      ;; Add the current sentence options to the current line in order to ensure
+      ;; different options still count.
+      (when (> (length sentence) 0)
+	(push-last (list sentence options) current-line)
+	(setf sentence ""))))
+
+  ;; Ensures last line gets outputted
+  (when current-line
+    (push-last current-line output))
+output))||#
+
+
+
+;; Fix it so that it moves down the word when the word would be out of bounds(unless no word on current line*)
+;; Also create support for \n and \r character.
+(defun line-wrap-calc (texts boundry font start-pos)
+  "Seperate a list of words into lines of words based on maximum line-length allowed to be drawn(for use with draw-lines function)"
+  (let ((x start-pos)
+	(output nil)
+	(current-line)
+	(sentence ""))
+
+  ;; loop through the texts and options
+  (dolist (text texts)
+    (let* ((options (cadr text)))
+
+      ;; loop through the seperate words
+      (dolist (word (uiop:split-string (car text) :separator '(#\space)))
+	(setf sentence (format nil (if (> (length word) 0) "~a ~a" "~a~a") sentence word))
+	(incf x (w word (get-option-from-alist 'font options font)))
+	;(incf x (w word))
+
+	;; When beyond boundry, add sentence to the line with option.
+	(when (> x boundry)
+	  
 	  ;; Make it move the out-of-bounds word to next line
 	  (push-last (list sentence options) current-line)
 	  (push-last current-line output)
