@@ -133,7 +133,8 @@ New list:
 (defun draw-string (string x y options default-color base-font surface)
   (let ((color (get-option-from-alist 'color options default-color))
 	(font (get-option-from-alist 'font options base-font)))
-    (sdl:draw-string-solid-* string x y :color color :font font :surface surface)))
+    (when (> (length string) 0)
+      (sdl:draw-string-solid-* string x y :color color :font font :surface surface))))
 
 #|
 (case type
@@ -167,86 +168,49 @@ text = (
 (defun line-wrapping (text boundry &key (font sdl:*default-font*) (start-pos 0))
   (line-wrap-calc (filter-out-options text) boundry font start-pos))
 
-#||
-(defun line-wrap-calc (texts boundry font start-pos)
-  "Seperate a list of words into lines of words based on maximum line-length allowed to be drawn(for use with draw-lines function)"
-  (let ((x start-pos)
-	(output nil)
-	(current-line)
-	(sentence ""))
-
-  ;; loop through the texts and options
-  (dolist (text texts)
-    (let* ((options (cadr text)))
-
-      ;; loop through the seperate words
-      (dolist (word (uiop:split-string (car text) :separator '(#\space)))
-	(setf sentence (format nil (if (> (length word) 0) "~a ~a" "~a~a") sentence word))
-	(incf x (w word (get-option-from-alist 'font options font)))
-	;(incf x (w word))
-
-	;; When beyond boundry, add sentence to the line with option.
-	(when (> x boundry)
-
-	  ;; Make it move the out-of-bounds word to next line
-	  (push-last (list sentence options) current-line)
-	  (push-last current-line output)
-	  (setf current-line nil 
-		sentence ""
-		x start-pos)))
-
-      ;; Add the current sentence options to the current line in order to ensure
-      ;; different options still count.
-      (when (> (length sentence) 0)
-	(push-last (list sentence options) current-line)
-	(setf sentence ""))))
-
-  ;; Ensures last line gets outputted
-  (when current-line
-    (push-last current-line output))
-output))||#
-
-
-
-;; Fix it so that it moves down the word when the word would be out of bounds(unless no word on current line*)
 ;; Also create support for \n and \r character.
 (defun line-wrap-calc (texts boundry font start-pos)
   "Seperate a list of words into lines of words based on maximum line-length allowed to be drawn(for use with draw-lines function)"
   (let ((x start-pos)
 	(output nil)
 	(current-line)
-	(sentence ""))
+	(sentence "")
+	(options))
 
   ;; loop through the texts and options
-  (dolist (text texts)
-    (let* ((options (cadr text)))
-
+    (dolist (text texts)
+      (setf options (cadr text))
       ;; loop through the seperate words
       (dolist (word (uiop:split-string (car text) :separator '(#\space)))
-	(setf sentence (format nil (if (> (length word) 0) "~a ~a" "~a~a") sentence word))
 	(incf x (w word (get-option-from-alist 'font options font)))
-	;(incf x (w word))
 
+	;; Create a check for \\n or \\r to do create a new-line
+	;; Will need to do multiple \n in a sentence\word.
+
+	
 	;; When beyond boundry, add sentence to the line with option.
-	(when (> x boundry)
-	  
-	  ;; Make it move the out-of-bounds word to next line
-	  (push-last (list sentence options) current-line)
-	  (push-last current-line output)
-	  (setf current-line nil 
-		sentence ""
-		x start-pos)))
+	(cond ((> x boundry)) 
+	       (push-last (list sentence options) current-line)
+	       (push-last current-line output)
+	       (setf current-line nil 
+		     sentence ""
+		     x (+ start-pos (length word))))
+	      (t 
+	       ;; Add the current sentence options to the current line in order to ensure
+	       ;; different options still count.
+	       (when (> (length sentence) 0)
+		 (push-last (list sentence options) current-line)
+		 (setf sentence ""))))
 
-      ;; Add the current sentence options to the current line in order to ensure
-      ;; different options still count.
-      (when (> (length sentence) 0)
-	(push-last (list sentence options) current-line)
-	(setf sentence ""))))
-
-  ;; Ensures last line gets outputted
-  (when current-line
-    (push-last current-line output))
-  output))
+	(setf sentence (format nil (if (> (length word) 0) "~a ~a" "~a~a") sentence word))))
+    
+    ;; Ensures last line gets outputted
+    (when sentence
+      (push-last (list sentence options) current-line))
+					;   (sbreak "stop!")    
+    (when current-line
+      (push-last current-line output))
+    output))
 
 (defun draw-texts (point lines-to-draw &key args
 				 (default-color (get-color white)) (font sdl:*default-font*)
@@ -263,9 +227,28 @@ output))||#
 	(dolist (text-list line)
 	  (let* ((text (car text-list))
 		(options (cadr text-list))
-		(current-font-height (h text (get-option-from-alist 'font options font))))
+		 (current-font-height (h text (get-option-from-alist 'font options font))))
 	    (draw-string text x y options default-color font surface)
 	    (setf font-height (if (> current-font-height font-height) current-font-height font-height))
 	    ;(setf height (h text (get-option-from-alist 'font options font)))
 	    (incf x (w text (get-option-from-alist 'font options font))))))
       (incf y font-height))))
+
+
+
+
+;; Incoperate\work it into the linewrap calc function, 
+(defun newline-splitter (string)
+"split into list of strings after "
+  (let ((list))
+	 (loop for i to (shf::last-index string)
+	    with word = ""
+	    finally
+	      (shf::push-last word list)
+	    do
+	      (when (and (string= (aref string i) #\\) (string= (aref string (incf i)) #\n))
+		(shf::push-last word list)
+		(incf i)
+		(setf word ""))
+	      (setf word (format nil "~a~a" word (aref string i))))
+    list))
