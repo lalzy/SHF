@@ -1,6 +1,6 @@
 The first attempt at an engine built atop of SDL. It originally was **NOT** an engine, instead started as a series of helpers for SDL to make things quicker.
 
-My space-invaders test was a big test-case for building this engine.
+My [space-invaders](https://github.com/lalzy/Spaceinvaders-clone) test was a big test-case for building this engine.
 
 it was depricated in favor of [yggdrasil](https://github.com/lalzy/yggdrasil-old) and exist as personal journey/history only. Much of the core concepts of what started SHF retains in Yggdrasil, but was rewritten to be clearer (code-wise), and feel more like an engine, instead of a series of SDL-helpers.
 
